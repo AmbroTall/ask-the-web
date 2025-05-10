@@ -229,7 +229,7 @@ with st.sidebar:
     st.session_state.show_quality_check = st.checkbox(
         "Show Citation Quality Check",
         value=st.session_state.show_quality_check,
-        help="Toggle to enable/disable citation quality validation and styling."
+        help="Toggle to enable/disable citation quality validation."
     )
     if st.button("Clear Cache"):
         st.cache_data.clear()

@@ -1,8 +1,6 @@
-# test_scape.py
-
 import pytest
 from unittest.mock import patch, MagicMock
-from src.scrape import scrape_page
+from ask_the_web.src.scrape import scrape_page
 import requests
 from bs4 import BeautifulSoup
 

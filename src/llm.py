@@ -3,7 +3,7 @@ import os
 import time
 import google.generativeai as genai
 from dotenv import load_dotenv
-from src.scrape import scrape_page
+from .scrape import scrape_page
 import streamlit as st
 
 load_dotenv()
