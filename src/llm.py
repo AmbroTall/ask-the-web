@@ -8,6 +8,7 @@ import streamlit as st
 
 load_dotenv()
 
+
 @st.cache_data
 def generate_answer(question: str, sources: list[dict]) -> tuple[str, str]:
     """
@@ -35,9 +36,11 @@ def generate_answer(question: str, sources: list[dict]) -> tuple[str, str]:
     source_texts = []
     for i, s in enumerate(sources):
         try:
-            content = scrape_page(s['url'])
+            content = scrape_page(s["url"])
             if content:
-                source_texts.append(f"[{i + 1}] Title: {s['title']}\nURL: {s['url']}\nContent: {content}")
+                source_texts.append(
+                    f"[{i + 1}] Title: {s['title']}\nURL: {s['url']}\nContent: {content}"
+                )
             else:
                 print(f"Warning: No content scraped from {s['url']}")
         except Exception as e:
@@ -85,7 +88,9 @@ def generate_answer(question: str, sources: list[dict]) -> tuple[str, str]:
             answer, sources_md = answer_text.split("Sources:", 1)
             return answer.strip(), "Sources:" + sources_md.strip()
         else:
-            sources_list = "\n".join([f"[{i + 1}] {s['title']} - {s['url']}" for i, s in enumerate(sources)])
+            sources_list = "\n".join(
+                [f"[{i + 1}] {s['title']} - {s['url']}" for i, s in enumerate(sources)]
+            )
             return answer_text.strip(), f"Sources:\n{sources_list}"
 
     except Exception as e:

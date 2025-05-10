@@ -40,20 +40,22 @@ def mock_response():
     </body>
     </html>
     """
-    mock.headers = {'Content-Type': 'text/html'}
+    mock.headers = {"Content-Type": "text/html"}
     mock.raise_for_status = MagicMock()
     return mock
 
 
 def test_scrape_page_successful(mock_response):
     """Test successful scraping of a page."""
-    with patch('requests.get', return_value=mock_response):
-        result = scrape_page('https://example.com')
+    with patch("requests.get", return_value=mock_response):
+        result = scrape_page("https://example.com")
 
         # Check that the content includes main article text
         assert "Main Article Title" in result
         assert "This is the first paragraph of content." in result
-        assert "This is the second paragraph with more details about the topic." in result
+        assert (
+            "This is the second paragraph with more details about the topic." in result
+        )
 
         # Check that unwanted elements are removed
         assert "Site Header" not in result
@@ -65,15 +67,17 @@ def test_scrape_page_successful(mock_response):
 
 def test_scrape_page_connection_error():
     """Test handling of connection error."""
-    with patch('requests.get', side_effect=requests.ConnectionError("Connection refused")):
-        result = scrape_page('https://example.com')
+    with patch(
+        "requests.get", side_effect=requests.ConnectionError("Connection refused")
+    ):
+        result = scrape_page("https://example.com")
         assert result == ""
 
 
 def test_scrape_page_timeout():
     """Test handling of timeout."""
-    with patch('requests.get', side_effect=requests.Timeout("Request timed out")):
-        result = scrape_page('https://example.com')
+    with patch("requests.get", side_effect=requests.Timeout("Request timed out")):
+        result = scrape_page("https://example.com")
         assert result == ""
 
 
@@ -83,22 +87,22 @@ def test_scrape_page_http_error():
     mock_response.raise_for_status.side_effect = requests.HTTPError("404 Client Error")
     mock_response.status_code = 404
 
-    with patch('requests.get', return_value=mock_response):
-        result = scrape_page('https://example.com')
+    with patch("requests.get", return_value=mock_response):
+        result = scrape_page("https://example.com")
         assert result == ""
 
 
 def test_scrape_page_invalid_url():
     """Test handling of invalid URL."""
-    result = scrape_page('not-a-valid-url')
+    result = scrape_page("not-a-valid-url")
     assert result == ""
 
 
 def test_scrape_page_non_html_content():
     """Test handling of non-HTML content."""
     mock_response = MagicMock()
-    mock_response.headers = {'Content-Type': 'application/pdf'}
+    mock_response.headers = {"Content-Type": "application/pdf"}
 
-    with patch('requests.get', return_value=mock_response):
-        result = scrape_page('https://example.com/document.pdf')
+    with patch("requests.get", return_value=mock_response):
+        result = scrape_page("https://example.com/document.pdf")
         assert result == ""

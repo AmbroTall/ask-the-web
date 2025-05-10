@@ -25,14 +25,8 @@ def search_web(query: str) -> list[dict]:
     if not url:
         raise ValueError("URL not set in environment variables.")
 
-    payload = json.dumps({
-        "q": query,
-        "gl": "ke"
-    })
-    headers = {
-        'X-API-KEY': api_key,
-        'Content-Type': 'application/json'
-    }
+    payload = json.dumps({"q": query, "gl": "ke"})
+    headers = {"X-API-KEY": api_key, "Content-Type": "application/json"}
     try:
         response = requests.post(url, headers=headers, data=payload, timeout=10)
         response.raise_for_status()

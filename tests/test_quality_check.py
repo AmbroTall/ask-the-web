@@ -25,7 +25,9 @@ def mock_scraped_texts():
 def test_validate_citations_all_valid(mock_search_results, mock_scraped_texts):
     """Test validation when all citations are valid."""
     answer = "Python is a programming language [1]. It is easy to learn [2]."
-    quality_results = validate_citations(answer, mock_search_results, mock_scraped_texts)
+    quality_results = validate_citations(
+        answer, mock_search_results, mock_scraped_texts
+    )
 
     assert quality_results["overall_score"] == "Excellent (2/2 valid citations, 100.0%)"
     assert len(quality_results["citations"]) == 2
@@ -38,7 +40,9 @@ def test_validate_citations_all_valid(mock_search_results, mock_scraped_texts):
 def test_validate_citations_some_invalid(mock_search_results, mock_scraped_texts):
     """Test validation when some citations are invalid."""
     answer = "Python is a programming language [1]. Java is the best [2]."
-    quality_results = validate_citations(answer, mock_search_results, mock_scraped_texts)
+    quality_results = validate_citations(
+        answer, mock_search_results, mock_scraped_texts
+    )
 
     assert quality_results["overall_score"] == "Fair (1/2 valid citations, 50.0%)"
     assert len(quality_results["citations"]) == 2
@@ -51,7 +55,9 @@ def test_validate_citations_some_invalid(mock_search_results, mock_scraped_texts
 def test_validate_citations_no_citations(mock_search_results, mock_scraped_texts):
     """Test validation when there are no citations."""
     answer = "Python is a programming language."
-    quality_results = validate_citations(answer, mock_search_results, mock_scraped_texts)
+    quality_results = validate_citations(
+        answer, mock_search_results, mock_scraped_texts
+    )
 
     assert quality_results["overall_score"] == "No citations to evaluate"
     assert len(quality_results["citations"]) == 0
@@ -68,10 +74,14 @@ def test_validate_citations_missing_scraped_texts(mock_search_results):
     assert quality_results["citations"][0]["details"][0]["valid"] == False
 
 
-def test_validate_citations_invalid_citation_numbers(mock_search_results, mock_scraped_texts):
+def test_validate_citations_invalid_citation_numbers(
+    mock_search_results, mock_scraped_texts
+):
     """Test validation with out-of-range citation numbers."""
     answer = "Python is a programming language [10]."
-    quality_results = validate_citations(answer, mock_search_results, mock_scraped_texts)
+    quality_results = validate_citations(
+        answer, mock_search_results, mock_scraped_texts
+    )
 
     assert quality_results["overall_score"] == "Poor (0/1 valid citations, 0.0%)"
     assert len(quality_results["citations"]) == 1

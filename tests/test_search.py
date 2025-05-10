@@ -10,15 +10,27 @@ import requests
 def mock_search_results():
     """Create mock search results."""
     return [
-        {"title": "Python Programming", "url": "https://example.com/python", "snippet": "Python is a programming language."},
-        {"title": "Learn Python", "url": "https://example.com/learn-python", "snippet": "Learn Python basics."},
-        {"title": "Python Docs", "url": "https://example.com/python-docs", "snippet": "Official Python documentation."},
+        {
+            "title": "Python Programming",
+            "url": "https://example.com/python",
+            "snippet": "Python is a programming language.",
+        },
+        {
+            "title": "Learn Python",
+            "url": "https://example.com/learn-python",
+            "snippet": "Learn Python basics.",
+        },
+        {
+            "title": "Python Docs",
+            "url": "https://example.com/python-docs",
+            "snippet": "Official Python documentation.",
+        },
     ]
 
 
 def test_search_web_successful(mock_search_results):
     """Test successful web search."""
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"results": mock_search_results}
@@ -33,7 +45,7 @@ def test_search_web_successful(mock_search_results):
 
 def test_search_web_no_results():
     """Test web search with no results."""
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"results": []}
@@ -46,17 +58,21 @@ def test_search_web_no_results():
 
 def test_search_web_connection_error():
     """Test handling of connection error during web search."""
-    with patch('requests.get', side_effect=requests.ConnectionError("Connection refused")):
+    with patch(
+        "requests.get", side_effect=requests.ConnectionError("Connection refused")
+    ):
         results = search_web("What is Python?")
         assert results == []
 
 
 def test_search_web_http_error():
     """Test handling of HTTP error during web search."""
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_response = MagicMock()
         mock_response.status_code = 500
-        mock_response.raise_for_status.side_effect = requests.HTTPError("500 Server Error")
+        mock_response.raise_for_status.side_effect = requests.HTTPError(
+            "500 Server Error"
+        )
         mock_get.return_value = mock_response
 
         results = search_web("What is Python?")
@@ -65,7 +81,7 @@ def test_search_web_http_error():
 
 def test_search_web_invalid_response():
     """Test handling of invalid JSON response."""
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.side_effect = ValueError("Invalid JSON")

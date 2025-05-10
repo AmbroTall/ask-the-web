@@ -41,10 +41,10 @@ def count_tokens(text: str) -> int:
 
 
 def track_telemetry(
-        question: str,
-        sources: List[Dict[str, str]],
-        scraped_texts: Dict[str, str],
-        answer: Optional[str] = None
+    question: str,
+    sources: List[Dict[str, str]],
+    scraped_texts: Dict[str, str],
+    answer: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Track tokens and latency for a query with accurate token counting.
@@ -80,5 +80,5 @@ def track_telemetry(
         "latency": 0.0,  # Will be filled in by the caller
         "source_count": len(sources),
         "question_length": len(question),
-        "answer_length": len(answer) if answer else 0
+        "answer_length": len(answer) if answer else 0,
     }
