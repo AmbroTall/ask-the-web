@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+import re
 from src.search import search_web
 from src.scrape import scrape_page
 from src.llm import generate_answer
@@ -11,12 +12,11 @@ st.set_page_config(
     page_title="Ask the Web - Citation-backed Answers",
     page_icon="🔍",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="expanded"
 )
 
 # Custom CSS for better styling
-st.markdown(
-    """
+st.markdown("""
 <style>
     .main-header {
         font-size: 2.5rem;
@@ -26,7 +26,7 @@ st.markdown(
     }
     .sub-header {
         font-size: 1.6rem;
-        color: #ccc;
+        color: #FFFFFF;
         font-weight: 600;
         text-align: center;
         margin-bottom: 2rem;
@@ -51,7 +51,7 @@ st.markdown(
         color: white;
         font-weight: bold;
         border-radius: 5px;
-        padding: 0.3rem 0.6rem;
+        padding: 0.5rem 1rem;
         border: none;
         transition: background-color 0.2s ease, color 0.2s ease;
         width: 100%;
@@ -70,7 +70,7 @@ st.markdown(
         color: white;
         font-weight: bold;
         border-radius: 5px;
-        padding: 0.3rem 0.6rem;
+        padding: 0.5rem 1rem;
         border: none !important;
         transition: background-color 0.2s ease, color 0.2s ease;
         width: 100% !important;
@@ -81,7 +81,7 @@ st.markdown(
         border: none !important;
         color: #E0E0E0;
     }
-
+  
     .telemetry-card {
         background-color: #F5F5F5;
         border-radius: 5px;
@@ -182,57 +182,42 @@ st.markdown(
         margin: 0;
     }
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 # Initialize session state variables
-if "search_results" not in st.session_state:
+if 'search_results' not in st.session_state:
     st.session_state.search_results = None
-if "scraped_texts" not in st.session_state:
+if 'scraped_texts' not in st.session_state:
     st.session_state.scraped_texts = {}
-if "quality_score" not in st.session_state:
+if 'quality_score' not in st.session_state:
     st.session_state.quality_score = None
 if "input_value" not in st.session_state:
     st.session_state.input_value = ""
+if "show_quality_check" not in st.session_state:
+    st.session_state.show_quality_check = False
 
 # Title and description
-st.markdown(
-    "<h1 class='main-header'>🔍 Ask the Web</h1>", unsafe_allow_html=True
-)
-st.markdown(
-    "<p class='sub-header'>Get citation-backed answers to your questions "
-    "using web search and AI</p>",
-    unsafe_allow_html=True,
-)
+st.markdown("<h1 class='main-header'>🔍 Ask the Web</h1>", unsafe_allow_html=True)
+st.markdown("<p class='sub-header'>Get citation-backed answers to your questions using web search and AI</p>",
+            unsafe_allow_html=True)
 
 # Sidebar with info
 with st.sidebar:
     # Use emoji as logo instead of image
-    st.markdown(
-        "<div style='text-align: center; font-size: 5rem;'>🔍</div>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        "<h2 style='text-align: center;'>Ask the Web</h2>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div style='text-align: center; font-size: 5rem;'>🔍</div>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center;'>Ask the Web</h2>", unsafe_allow_html=True)
 
     st.markdown("### About")
     st.write(
-        "Ask the Web uses search APIs to find relevant sources, extracts "
-        "key information, and generates answers with proper citations."
-    )
+        "Ask the Web uses search APIs to find relevant sources, extracts key information, and generates answers with proper citations.")
 
     st.markdown("### How it works")
-    st.markdown(
-        """
+    st.markdown("""
     1. Enter your question
     2. We search the web for relevant sources
     3. AI generates an answer with citations
     4. Results are displayed with source links
-    """
-    )
+    """)
 
     # Telemetry section in sidebar (initially empty)
     st.markdown("### Telemetry")
@@ -240,14 +225,9 @@ with st.sidebar:
 
     # Options section
     st.markdown("### Options")
-    # Initialize the toggle state
-    if "show_quality_check" not in st.session_state:
-        st.session_state.show_quality_check = True
-    # Quality check toggle
     st.session_state.show_quality_check = st.checkbox(
         "Show Citation Quality Check",
-        value=st.session_state.show_quality_check,
-        help="Toggle to enable/disable citation quality validation.",
+        value=st.session_state.show_quality_check
     )
     if st.button("Clear Cache"):
         st.cache_data.clear()
@@ -263,14 +243,12 @@ with main_container:
             "Your Question",
             placeholder="Example: What are the benefits of meditation?",
             key="question_input",
-            value=st.session_state.input_value,
+            value=st.session_state.input_value
         )
 
         cols = st.columns([1, 1], gap="small")
         with cols[0]:
-            submit = st.form_submit_button(
-                "🔍 Search & Answer", use_container_width=True
-            )
+            submit = st.form_submit_button("🔍 Search & Answer", use_container_width=True)
         with cols[1]:
             clear = st.form_submit_button("Clear", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
@@ -291,7 +269,6 @@ with main_container:
         st.rerun()
 
 # Results section
-# Results section
 if submit and question:
     try:
         start_time = time.time()
@@ -303,159 +280,41 @@ if submit and question:
         # Search
         progress_bar.progress(10, text="Searching the web...")
         search_results = search_web(question)
-        search_results = search_results[:5]
         st.session_state.search_results = search_results
 
         if not search_results:
-            st.error(
-                "No search results found. Please try a different question."
-            )
+            st.error("No search results found. Please try a different question.")
             st.stop()
+
+        # Limit search results to 5
+        search_results = search_results[:5]
 
         # Scrape content from each source
         progress_bar.progress(30, text="Scraping content from sources...")
         scraped_texts = {}
         for source in search_results:
-            scraped_texts[source["url"]] = scrape_page(source["url"])
+            scraped_texts[source['url']] = scrape_page(source['url'])
         st.session_state.scraped_texts = scraped_texts
 
         # Generate answer
-        progress_bar.progress(
-            50, text="Analyzing sources and generating answer..."
-        )
+        progress_bar.progress(50, text="Analyzing sources and generating answer...")
         answer, sources_md = generate_answer(question, search_results)
-
-        # Collect debug information
-        debug_info = []
-        import re
-
-        citation_markers = sorted(
-            set(re.findall(r"\[\d+\]", answer)),
-            key=lambda x: int(x.strip("[]"))
-        )
-        debug_info.append(
-            f"Number of search results after limiting: {len(search_results)}"
-        )
-        debug_info.append(
-            f"Number of unique citations before processing:"
-            f" {len(citation_markers)}"
-        )
-        total_citation_instances = len(re.findall(r"\[\d+\]", answer))
-        debug_info.append(
-            f"Total citation instances before processing:"
-            f" {total_citation_instances}"
-        )
-
-        # Cap unique citations at 5
-        if len(citation_markers) > 5:
-            allowed_markers = citation_markers[:5]
-            for marker in citation_markers[5:]:
-                answer = answer.replace(marker, "")
-            sources_list = sources_md.replace(
-                "Sources:", ""
-            ).strip().split("\n")
-            sources_list = [s for s in sources_list if s.strip()]
-            sources_list = sources_list[:5]
-            sources_md = "Sources:\n" + "\n".join(sources_list)
-
-        # Aggregate citations across the entire answer
-        # Step 1: Find all citation markers in order of appearance
-        all_markers = re.findall(r"\[\d+\]", answer)
-        # Step 2: Track the first occurrence of each citation marker
-        seen_markers = set()
-        positions_to_keep = []
-        for i, marker in enumerate(all_markers):
-            if marker not in seen_markers:
-                seen_markers.add(marker)
-                positions_to_keep.append(i)
-        # Step 3: Reconstruct the answer, keeping only the first occurrence
-        new_answer_parts = []
-        current_pos = 0
-        for i, marker in enumerate(all_markers):
-            # Find the position of this marker in the original answer
-            marker_start = answer[current_pos:].index(marker) + current_pos
-            if i in positions_to_keep:
-                # Keep this marker: include text up to the marker,
-                # then the marker
-                new_answer_parts.append(
-                    answer[current_pos: marker_start + len(marker)]
-                )
-            else:
-                # Skip this marker: include text up to the marker,
-                # but exclude the marker
-                new_answer_parts.append(answer[current_pos:marker_start])
-            current_pos = marker_start + len(marker)
-        # Add any remaining text after the last marker
-        if current_pos < len(answer):
-            new_answer_parts.append(answer[current_pos:])
-        answer = "".join(new_answer_parts)
-
-        # Debug: Log the number of citations after aggregation
-        citation_markers = sorted(
-            set(re.findall(r"\[\d+\]", answer)),
-            key=lambda x: int(x.strip("[]"))
-        )
-        debug_info.append(
-            f"Number of unique citations after aggregation:"
-            f" {len(citation_markers)}"
-        )
-        total_citation_instances = len(re.findall(r"\[\d+\]", answer))
-        debug_info.append(
-            f"Total citation instances after aggregation: "
-            f"{total_citation_instances}"
-        )
-
-        # Update sources_md to only include citations present in the answer
-        used_citations = set(citation_markers)
-        sources_list = sources_md.replace(
-            "Sources:", ""
-        ).strip().split("\n")
-        sources_list = [s for s in sources_list if s.strip()]
-        updated_sources_list = []
-        for source in sources_list:
-            citation_label = source.split(" - ")[0].strip()
-            if citation_label in used_citations:
-                updated_sources_list.append(source)
-        sources_md = "Sources:\n" + "\n".join(updated_sources_list)
 
         # Run quality check
         progress_bar.progress(80, text="Validating citation quality...")
         st.session_state.quality_score = None  # Reset to avoid stale data
-        quality_results = validate_citations(
-            answer, search_results, scraped_texts
-        )
-        # Debug: Inspect citations in quality_results
-        citation_count_in_quality = len(
-            [
-                item
-                for citation in quality_results["citations"]
-                for item in citation["details"]
-            ]
-        )
-        debug_info.append(
-            f"Number of citations in quality_results: "
-            f"{citation_count_in_quality}"
-        )
+        quality_results = validate_citations(answer, search_results, scraped_texts)
 
         # Recompute quality score based on unique citations in the answer
-        actual_citations = sorted(
-            set(re.findall(r"\[\d+\]", answer)),
-            key=lambda x: int(x.strip("[]"))
-        )
+        actual_citations = sorted(set(re.findall(r"\[\d+\]", answer)), key=lambda x: int(x.strip("[]")))
         total_citations = len(actual_citations)
-        # Count valid citations, ensuring we only count each
-        # unique citation once
         valid_citations = 0
         seen_citations = set()
         for citation in quality_results["citations"]:
             for detail in citation["details"]:
                 citation_num = detail["citation_num"]
                 citation_marker = f"[{citation_num}]"
-                if (
-                    citation_marker in actual_citations
-                    and detail["valid"]
-                    and citation_marker not in seen_citations
-                ):
+                if citation_marker in actual_citations and detail["valid"] and citation_marker not in seen_citations:
                     valid_citations += 1
                     seen_citations.add(citation_marker)
         if total_citations > 0:
@@ -468,21 +327,14 @@ if submit and question:
                 quality_label = "Fair"
             else:
                 quality_label = "Poor"
-            quality_score = (f"{quality_label} ({valid_citations}/"
-                             f"{total_citations} valid citations,"
-                             f" {percentage:.1f}%)")
+            quality_score = f"{quality_label} ({valid_citations}/{total_citations} valid citations, {percentage:.1f}%)"
         else:
             quality_score = "No citations to evaluate"
         st.session_state.quality_score = quality_score
 
-        # Debug: Log the recomputed quality score
-        debug_info.append(f"Recomputed quality score: {quality_score}")
-
         # Track telemetry and calculate actual latency
         total_time = time.time() - start_time
-        telemetry = track_telemetry(
-            question, search_results, scraped_texts, answer
-        )
+        telemetry = track_telemetry(question, search_results, scraped_texts, answer)
         telemetry["latency"] = total_time  # Use actual end-to-end time
 
         progress_bar.progress(100, text="Done!")
@@ -490,10 +342,7 @@ if submit and question:
         progress_bar.empty()
 
         # Display quality score badge if toggle is enabled
-        if (
-            "show_quality_check" in st.session_state
-            and st.session_state.show_quality_check
-        ):
+        if "show_quality_check" in st.session_state and st.session_state.show_quality_check:
             quality_score = st.session_state.quality_score
             if "Excellent" in quality_score:
                 badge_class = "quality-excellent"
@@ -503,49 +352,33 @@ if submit and question:
                 badge_class = "quality-fair"
             else:
                 badge_class = "quality-poor"
-            st.markdown(
-                f"<div class='quality-badge {badge_class}'>Citation Quality:"
-                f" {quality_score}</div>",
-                unsafe_allow_html=True,
-            )
+            st.markdown(f"<div class='quality-badge {badge_class}'>Citation Quality: {quality_score}</div>",
+                        unsafe_allow_html=True)
 
         # Process answer for inline citation styling
         answer_html = answer
         for i in range(len(search_results)):
             citation_num = i + 1
-            styled_citation = (f"<span class='citation' style="
-                               f"'color: #1565C0;'>[{citation_num}]</span>")
-            answer_html = answer_html.replace(
-                f"[{citation_num}]", styled_citation
-            )
+            styled_citation = f"<span class='citation'>[{citation_num}]</span>"
+            answer_html = answer_html.replace(f"[{citation_num}]", styled_citation)
 
         # Display answer in a nice container
         st.markdown("### Answer")
-        st.markdown(
-            f"<div class='answer-container'>{answer_html}</div>",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"<div class='answer-container'>{answer_html}</div>", unsafe_allow_html=True)
 
         # Format sources as a list
         st.markdown("### Sources")
         if sources_md:
-            sources_list = sources_md.replace(
-                "Sources:", ""
-            ).strip().split("\n")
+            sources_list = sources_md.replace("Sources:", "").strip().split("\n")
             for source in sources_list:
                 if source.strip():
                     source_parts = source.split(" - ")
                     if len(source_parts) >= 2:
                         citation_label = source_parts[0].strip()
                         url = source_parts[-1].strip()
-                        st.markdown(
-                            f"- {citation_label} - [{url}]({url})",
-                            unsafe_allow_html=True,
-                        )
+                        st.markdown(f"- {citation_label} - [{url}]({url})", unsafe_allow_html=True)
                     else:
-                        st.markdown(
-                            f"- {source.strip()}", unsafe_allow_html=True
-                        )
+                        st.markdown(f"- {source.strip()}", unsafe_allow_html=True)
         else:
             st.write("No sources available.")
 
@@ -553,62 +386,37 @@ if submit and question:
         with telemetry_container:
             st.markdown("<div class='telemetry-card'>", unsafe_allow_html=True)
             st.markdown(
-                f"<span class='metric-label'>Total Time:</span> <span class="
-                f"'metric-value'>{telemetry['latency']:.2f}s</span>",
-                unsafe_allow_html=True,
-            )
+                f"<span class='metric-label'>Total Time:</span> <span class='metric-value'>{telemetry['latency']:.2f}s</span>",
+                unsafe_allow_html=True)
             st.markdown(
-                f"<span class='metric-label'>Input Tokens:</span> <span class="
-                f"'metric-value'>{telemetry['input_tokens']}</span>",
-                unsafe_allow_html=True,
-            )
+                f"<span class='metric-label'>Input Tokens:</span> <span class='metric-value'>{telemetry['input_tokens']}</span>",
+                unsafe_allow_html=True)
             st.markdown(
-                f"<span class='metric-label'>Output Tokens:</span> <span "
-                f"class='metric-value'>{telemetry['output_tokens']}</span>",
-                unsafe_allow_html=True,
-            )
+                f"<span class='metric-label'>Output Tokens:</span> <span class='metric-value'>{telemetry['output_tokens']}</span>",
+                unsafe_allow_html=True)
             st.markdown(
-                f"<span class='metric-label'>Total Tokens:</span> <span class="
-                f"'metric-value'>{telemetry['total_tokens']}</span>",
-                unsafe_allow_html=True,
-            )
+                f"<span class='metric-label'>Total Tokens:</span> <span class='metric-value'>{telemetry['total_tokens']}</span>",
+                unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
         # Debug panel with better styling
         with st.expander("Debug: Raw Search Results"):
             st.json(search_results)
 
-        # # New debug expander for processing details
-        # with st.expander("Debug: Processing Details"):
-        #     for info in debug_info:
-        #         st.write(info)
-
         # Show Citation Quality Check debug only if toggle is enabled
-        if (
-            "show_quality_check" in st.session_state
-            and st.session_state.show_quality_check
-        ):
+        if "show_quality_check" in st.session_state and st.session_state.show_quality_check:
             with st.expander("Debug: Citation Quality Check"):
                 st.json(quality_results)
 
     except Exception as e:
-        st.markdown(
-            f"<div class='error-message'>Error: {str(e)}</div>",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"<div class='error-message'>Error: {str(e)}</div>", unsafe_allow_html=True)
         st.error(f"An error occurred: {str(e)}")
         if "cache" in str(e).lower():
-            st.warning(
-                "A caching error occurred. Try clearing the cache from the"
-                " sidebar."
-            )
+            st.warning("A caching error occurred. Try clearing the cache from the sidebar.")
 
 # Footer - fixed at bottom
-st.markdown(
-    """
+st.markdown("""
 <div class='footer'>
     <p>Created for SkillCat Work Sample. Powered by Streamlit + Gemini.</p>
 </div>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)

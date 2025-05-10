@@ -1,4 +1,6 @@
-# llm.py
+"""
+Module to generate answers using Gemini LLM based on scraped content.
+"""
 import os
 import time
 import google.generativeai as genai
@@ -39,7 +41,9 @@ def generate_answer(question: str, sources: list[dict]) -> tuple[str, str]:
             content = scrape_page(s["url"])
             if content:
                 source_texts.append(
-                    f"[{i + 1}] Title: {s['title']}\nURL: {s['url']}\nContent: {content}"
+                    f"[{i + 1}] Title: {s['title']}\n"
+                    f"URL: {s['url']}\n"
+                    f"Content: {content}"
                 )
             else:
                 print(f"Warning: No content scraped from {s['url']}")
@@ -49,34 +53,36 @@ def generate_answer(question: str, sources: list[dict]) -> tuple[str, str]:
     if not source_texts:
         raise ValueError("No valid content could be scraped from any sources.")
 
-    prompt = f"""
-    You are a precise research assistant. Answer the question below using ONLY the information from the provided sources.
-
-    QUESTION: {question}
-
-    SOURCES:
-    {chr(10).join(source_texts)}
-
-    INSTRUCTIONS:
-    1. Answer in clear, concise paragraphs with a logical structure (e.g., definition, key features, uses, history).
-    2. Use numbered citations like [1], [2], etc. after sentences or claims that require sourcing.
-    3. Cite a source only once per paragraph for related claims; do not repeat the same citation multiple times for closely related points.
-    4. Avoid redundancy by consolidating similar information (e.g., do not repeat the same feature or use in multiple sentences).
-    5. Only make claims that are directly supported by the sources and relevant to the question.
-    6. If the sources don't contain enough information to answer fully, acknowledge the limitations.
-    7. Never make up information or use your general knowledge.
-    8. Format citations as [n] where n is the source number.
-    9. Always place citations OUTSIDE punctuation marks.
-
-    Your response must follow this exact format:
-
-    <answer with [n] citations after relevant sentences or claims>
-
-    Sources:
-    [1] Source Title - URL
-    [2] Source Title - URL
-    ...etc.
-    """
+    # Build prompt with proper line breaks
+    prompt = (
+        f"You are a precise research assistant. Answer the question below "
+        f"using ONLY the information from the provided sources.\n\n"
+        f"QUESTION: {question}\n\n"
+        f"SOURCES:\n{chr(10).join(source_texts)}\n\n"
+        f"INSTRUCTIONS:\n"
+        f"1. Answer in clear, concise paragraphs with a logical structure "
+        f"(e.g., definition, key features, uses, history).\n"
+        f"2. Use numbered citations like [1], [2], etc. after sentences or "
+        f"claims that require sourcing.\n"
+        f"3. Cite a source only once per paragraph for related claims; do not"
+        f" repeat the same citation multiple times for closely related points."
+        f"\n"
+        f"4. Avoid redundancy by consolidating similar information (e.g., do "
+        f"not repeat the same feature or use in multiple sentences).\n"
+        f"5. Only make claims that are directly supported by the sources and "
+        f"relevant to the question.\n"
+        f"6. If the sources don't contain enough information to answer fully, "
+        f"acknowledge the limitations.\n"
+        f"7. Never make up information or use your general knowledge.\n"
+        f"8. Format citations as [n] where n is the source number.\n"
+        f"9. Always place citations OUTSIDE punctuation marks.\n\n"
+        f"Your response must follow this exact format:\n\n"
+        f"<answer with [n] citations after relevant sentences or claims>\n\n"
+        f"Sources:\n"
+        f"[1] Source Title - URL\n"
+        f"[2] Source Title - URL\n"
+        f"...etc."
+    )
 
     start_time = time.time()
     try:
@@ -88,9 +94,10 @@ def generate_answer(question: str, sources: list[dict]) -> tuple[str, str]:
             answer, sources_md = answer_text.split("Sources:", 1)
             return answer.strip(), "Sources:" + sources_md.strip()
         else:
-            sources_list = "\n".join(
-                [f"[{i + 1}] {s['title']} - {s['url']}" for i, s in enumerate(sources)]
-            )
+            sources_list = "\n".join([
+                f"[{i + 1}] {s['title']} - {s['url']}"
+                for i, s in enumerate(sources)
+            ])
             return answer_text.strip(), f"Sources:\n{sources_list}"
 
     except Exception as e:
