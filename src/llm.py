@@ -1,6 +1,7 @@
 """
 Module to generate answers using Gemini LLM based on scraped content.
 """
+
 import os
 import time
 import google.generativeai as genai
@@ -94,10 +95,9 @@ def generate_answer(question: str, sources: list[dict]) -> tuple[str, str]:
             answer, sources_md = answer_text.split("Sources:", 1)
             return answer.strip(), "Sources:" + sources_md.strip()
         else:
-            sources_list = "\n".join([
-                f"[{i + 1}] {s['title']} - {s['url']}"
-                for i, s in enumerate(sources)
-            ])
+            sources_list = "\n".join(
+                [f"[{i + 1}] {s['title']} - {s['url']}" for i, s in enumerate(sources)]
+            )
             return answer_text.strip(), f"Sources:\n{sources_list}"
 
     except Exception as e:

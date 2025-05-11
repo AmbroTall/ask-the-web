@@ -1,132 +1,135 @@
 # Ask the Web - Streamlit Q&A with Citations
 
-A Streamlit application that answers questions by searching the web, extracting information from relevant pages, and generating responses with proper citations using Gemini LLM.
-
-![Ask the Web Screenshot](https://via.placeholder.com/800x400.png?text=Ask+The+Web+Screenshot)
+A Streamlit app that answers user questions by searching the web, extracting relevant content, and generating responses with citations using Gemini LLM. Includes optional stretch features: telemetry and citation quality validation.
 
 ## Architecture
 
 ```
-                     ┌───────────────┐
-                     │  Streamlit UI │
-                     └───────┬───────┘
-                             │
-                  ┌──────────▼──────────┐
-                  │       app.py        │
-                  └──────────┬──────────┘
-                             │
-           ┌────────────┬────┴────┬────────────┐
-           │            │         │            │
-  ┌────────▼─────┐ ┌────▼────┐ ┌──▼───┐ ┌──────▼──────┐
-  │   search.py  │ │scrape.py│ │llm.py│ │telemetry.py │
-  │ (web search) │ │(content │ │(LLM  │ │(performance │
-  │              │ │extraction)│ │answer)│ │metrics)    │
-  └──────────────┘ └─────────┘ └──────┘ └─────────────┘
-                                  │
-                      ┌───────────▼───────────┐
-                      │    quality_check.py   │
-                      │   (citation validation)│
-                      └───────────────────────┘
+┌───────────────┐
+│  Streamlit UI │
+└───────┬───────┘
+        │
+┌───────▼────────┐
+│     app.py     │
+└───────┬────────┘
+        │
+┌───────┴─────────────┬──────────────┬──────────────┐
+│ ┌───────────┐ ┌────▼─────┐ ┌────▼─────┐ ┌────────▼─────┐
+│ │ search.py │ │ scrape.py │ │  llm.py  │ │ telemetry.py │
+│ │(SerpAPI)  │ │(Beautiful │ │ (Gemini) │ │ (metrics)    │
+│ └───────────┘ │ Soup)     │ └────┬─────┘ └──────────────┘
+└───────────────┴───────────┘      │
+                           ┌───────▼─────────┐
+                           │ quality_check.py │
+                           │ (citation check) │
+                           └─────────────────┘
 ```
 
-## Setup (5 commands)
+## Setup (≤ 5 Commands)
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/ask-the-web.git
-   cd ask-the-web
-   ```
+### Clone the repository  
+```bash
+git clone https://github.com/yourusername/ask-the-web.git
+cd ask-the-web
+```
 
-2. **Create a virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+### Set up environment variables  
+```bash
+cp .env.example .env  # Edit .env with your SerpAPI and Gemini API keys
+```
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Set up environment variables**
-   ```bash
-   cp .env.example .env  # Then edit .env with your API keys
-   ```
-
-5. **Run the application**
-   ```bash
-   streamlit run app.py
-   ```
-
-Alternatively, **run with Docker**:
+### Run with Docker (recommended)  
 ```bash
 docker build -t ask-web .
 docker run -p 8501:8501 ask-web
 ```
 
-## How it Works
+### Alternative (Local Setup):  
+1. Create a virtual environment: 
+   ```bash
+   python -m venv venv && source venv/bin/activate
+   ```
+   (Windows: `venv\Scripts\activate`)  
 
-1. **Search**: The application uses SerpAPI to search the web for the most relevant results.
-2. **Scrape**: It extracts the main content from up to 5 search results using BeautifulSoup.
-3. **Generate**: The scraped content and the user's question are sent to Gemini LLM to generate an answer.
-4. **Cite**: The LLM includes numbered citations in the answer, linking to the source material.
-5. **Validate**: (Optional stretch) A second LLM call validates whether each citation actually supports the claims made.
+2. Install dependencies: 
+   ```bash
+   pip install -r requirements.txt
+   ```  
 
-## LLM Prompting Strategy
+3. Run: 
+   ```bash
+   streamlit run app.py
+   ```
 
-The system uses a structured prompt that includes:
+## How It Works
 
+1. **Search**: Queries SerpAPI to fetch up to 5 organic search results.  
+
+2. **Scrape**: Uses BeautifulSoup to extract main content from each result (removes scripts, nav, etc.).  
+
+3. **Generate**: Passes the question and scraped texts to Gemini (gemini-1.5-flash) for an answer.  
+
+4. **Cite**: Formats citations as [n] and lists sources in a "Sources" section.  
+
+### Stretch Features:  
+- **Telemetry sidebar**: Displays total tokens and latency per query.  
+- **Citation Quality Check**: Validates citations using a second LLM call, showing a pass/fail badge.
+
+## LLM Prompt & Rationale
+
+### Prompt (simplified):  
 ```
-You are a precise research assistant. Answer the question using ONLY the information from the provided sources.
-
+You are a precise research assistant. Answer the question using ONLY the provided sources.
 QUESTION: {question}
-
 SOURCES:
 [1] Title: {title1}
-URL: {url1}
-Content: {content1}
+    URL: {url1}
+    Content: {content1}
 ...
-
 INSTRUCTIONS:
-1. Answer in clear, concise paragraphs.
-2. Use numbered citations like [1], [2], etc. after EVERY sentence or claim.
-3. Only make claims that are directly supported by the sources.
+1. Answer in clear, concise paragraphs with numbered citations [1], [2], etc.
+2. Cite a source only once per paragraph for related claims.
+3. Only make claims directly supported by the sources.
 ...
 ```
 
-**Rationale**: This prompt explicitly instructs the model to maintain strict citation discipline while focusing only on information present in the provided sources, which significantly reduces hallucination risks.
+### Rationale: 
+The prompt was iterated to enforce strict source usage and citation discipline, minimizing hallucinations. Initial versions lacked clarity on citation frequency, leading to over-citation; the final version balances accuracy and readability.
 
 ## Testing
 
-Run the tests with:
+Run tests with:  
 ```bash
 pytest
 ```
 
-The test suite covers:
-- Web scraping functionality
-- Citation extraction and validation
-- Error handling scenarios
+### Coverage:  
+- **scrape.py**: Tests content extraction and error handling.  
+- **quality_check.py**: Tests citation extraction and validation logic.  
+- **search.py**: Tests API response parsing.
 
 ## Known Limitations
 
-- Search results quality depends on the SerpAPI service
-- Web scraping may fail on sites with complex JavaScript rendering or anti-scraping measures
-- Token limitations may truncate long source texts
-- Citation validation is not 100% reliable and may generate false positives/negatives
-- Response time can be slow (5-15 seconds) due to the sequential process of search → scrape → LLM generation
+- **Search**: SerpAPI free tier has rate limits; results may vary by query.  
+- **Scrape**: Fails on JavaScript-heavy sites (no headless browser support).  
+- **LLM**: 8000-char limit per source may truncate content (notified in debug).  
+- **Quality Check**: LLM-based validation may have false positives/negatives.  
+- **Performance**: End-to-end latency is 5-15s due to sequential processing.
 
 ## Dependencies
 
-- **Streamlit**: UI framework
-- **BeautifulSoup4**: Web scraping
-- **Google Generative AI**: Gemini API access
-- **Requests**: HTTP requests
-- **python-dotenv**: Environment variables management
-- **pytest**: Testing framework
+- **streamlit**: UI framework  
+- **beautifulsoup4**: Web scraping  
+- **google-generative-ai**: Gemini API  
+- **requests**: HTTP requests  
+- **python-dotenv**: Environment variable management  
+- **pytest**: Testing framework  
+- **tiktoken**: Token counting for telemetry
+
+See `requirements.txt` for full list.
 
 ## Credits
 
-This project was created as a work sample for SkillCat.
-
-Third-party libraries are used according to their respective licenses.
+- Built for SkillCat work sample.  
+- Uses SerpAPI free tier for search ([SerpAPI license](https://serpapi.com/terms)).  
+- BeautifulSoup and other libraries per their licenses.

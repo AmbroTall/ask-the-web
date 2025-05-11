@@ -44,9 +44,7 @@ def extract_citations(answer_text: str) -> List[Tuple[str, List[int]]]:
 
 @st.cache_data
 def validate_citations(
-        answer: str,
-        sources_data: List[Dict[str, str]],
-        scraped_texts: Dict[str, str]
+    answer: str, sources_data: List[Dict[str, str]], scraped_texts: Dict[str, str]
 ) -> Dict[str, Any]:
     """
     Validate that citations in the answer are supported by the source texts.
@@ -69,11 +67,7 @@ def validate_citations(
         model = genai.GenerativeModel("gemini-1.5-flash")
     except Exception as e:
         print(f"Model initialization error for validator: {e}")
-        return {
-            "overall_score": "N/A",
-            "validation_error": str(e),
-            "citations": []
-        }
+        return {"overall_score": "N/A", "validation_error": str(e), "citations": []}
 
     citations_data = extract_citations(answer)
     results = {"overall_score": "Pending", "citations": []}
@@ -123,11 +117,13 @@ def validate_citations(
             for citation_num in citation_nums:
                 source_idx = citation_num - 1
                 if source_idx < 0 or source_idx >= len(sources_data):
-                    sentence_validations.append({
-                        "citation_num": citation_num,
-                        "valid": False,
-                        "reason": "Citation number out of range",
-                    })
+                    sentence_validations.append(
+                        {
+                            "citation_num": citation_num,
+                            "valid": False,
+                            "reason": "Citation number out of range",
+                        }
+                    )
                     continue
 
                 pattern = (
@@ -140,26 +136,32 @@ def validate_citations(
                     if match:
                         verdict = match.group(1).upper()
                         explanation = match.group(2)
-                        sentence_validations.append({
-                            "citation_num": citation_num,
-                            "valid": verdict == "YES",
-                            "reason": explanation,
-                        })
+                        sentence_validations.append(
+                            {
+                                "citation_num": citation_num,
+                                "valid": verdict == "YES",
+                                "reason": explanation,
+                            }
+                        )
                         break
                 else:
-                    sentence_validations.append({
-                        "citation_num": citation_num,
-                        "valid": False,
-                        "reason": "Validation not found",
-                    })
+                    sentence_validations.append(
+                        {
+                            "citation_num": citation_num,
+                            "valid": False,
+                            "reason": "Validation not found",
+                        }
+                    )
 
             sentence_valid = any(v["valid"] for v in sentence_validations)
-            results["citations"].append({
-                "sentence": sentence,
-                "citations": citation_nums,
-                "validation": "Valid" if sentence_valid else "Invalid",
-                "details": sentence_validations,
-            })
+            results["citations"].append(
+                {
+                    "sentence": sentence,
+                    "citations": citation_nums,
+                    "validation": "Valid" if sentence_valid else "Invalid",
+                    "details": sentence_validations,
+                }
+            )
 
         valid_sentences = sum(
             1 for c in results["citations"] if c["validation"] == "Valid"
@@ -189,8 +191,4 @@ def validate_citations(
 
     except Exception as e:
         print(f"Validation error: {e}")
-        return {
-            "overall_score": "N/A",
-            "validation_error": str(e),
-            "citations": []
-        }
+        return {"overall_score": "N/A", "validation_error": str(e), "citations": []}

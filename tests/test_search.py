@@ -1,91 +1,55 @@
-# tests/test_search.py
-
 import pytest
-from unittest.mock import patch, MagicMock
+import responses
 from ask_the_web.src.search import search_web
-import requests
 
+@responses.activate
+def test_search_web_success():
+    """Test successful search API call."""
+    mock_response = {
+        "organic": [
+            {"title": "Result 1", "link": "http://example.com/1"},
+            {"title": "Result 2", "link": "http://example.com/2"},
+        ]
+    }
+    responses.add(
+        responses.POST,
+        "https://google.serper.dev/search",
+        json=mock_response,
+        status=200,
+    )
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setenv("SEARCH_API_KEY", "test_key")
+        mp.setenv("URL", "https://google.serper.dev/search")
+        results = search_web("test query")
+        assert len(results) == 2
+        assert results[0]["title"] == "Result 1"
+        assert results[0]["url"] == "http://example.com/1"
 
-@pytest.fixture
-def mock_search_results():
-    """Create mock search results."""
-    return [
-        {
-            "title": "Python Programming",
-            "url": "https://example.com/python",
-            "snippet": "Python is a programming language.",
-        },
-        {
-            "title": "Learn Python",
-            "url": "https://example.com/learn-python",
-            "snippet": "Learn Python basics.",
-        },
-        {
-            "title": "Python Docs",
-            "url": "https://example.com/python-docs",
-            "snippet": "Official Python documentation.",
-        },
-    ]
-
-
-def test_search_web_successful(mock_search_results):
-    """Test successful web search."""
-    with patch("requests.get") as mock_get:
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"results": mock_search_results}
-        mock_get.return_value = mock_response
-
-        results = search_web("What is Python?")
-        assert len(results) == 3
-        assert results[0]["title"] == "Python Programming"
-        assert results[0]["url"] == "https://example.com/python"
-        assert results[0]["snippet"] == "Python is a programming language."
-
-
-def test_search_web_no_results():
-    """Test web search with no results."""
-    with patch("requests.get") as mock_get:
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"results": []}
-        mock_get.return_value = mock_response
-
-        results = search_web("Non-existent query")
-        assert len(results) == 0
+@responses.activate
+def test_search_web_empty():
+    """Test empty search results."""
+    responses.add(
+        responses.POST,
+        "https://google.serper.dev/search",
+        json={"organic": []},
+        status=200,
+    )
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setenv("SEARCH_API_KEY", "test_key")
+        mp.setenv("URL", "https://google.serper.dev/search")
+        results = search_web("test streamlit")
         assert results == []
 
-
-def test_search_web_connection_error():
-    """Test handling of connection error during web search."""
-    with patch(
-        "requests.get", side_effect=requests.ConnectionError("Connection refused")
-    ):
-        results = search_web("What is Python?")
-        assert results == []
-
-
-def test_search_web_http_error():
-    """Test handling of HTTP error during web search."""
-    with patch("requests.get") as mock_get:
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.raise_for_status.side_effect = requests.HTTPError(
-            "500 Server Error"
-        )
-        mock_get.return_value = mock_response
-
-        results = search_web("What is Python?")
-        assert results == []
-
-
-def test_search_web_invalid_response():
-    """Test handling of invalid JSON response."""
-    with patch("requests.get") as mock_get:
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.side_effect = ValueError("Invalid JSON")
-        mock_get.return_value = mock_response
-
-        results = search_web("What is Python?")
+@responses.activate
+def test_search_web_error():
+    """Test handling of API errors."""
+    responses.add(
+        responses.POST,
+        "https://google.serper.dev/search",
+        status=500,
+    )
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setenv("SEARCH_API_KEY", "test_key")
+        mp.setenv("URL", "https://google.serper.dev/search")
+        results = search_web("test streamlit")
         assert results == []

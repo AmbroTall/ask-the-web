@@ -12,11 +12,12 @@ st.set_page_config(
     page_title="Ask the Web - Citation-backed Answers",
     page_icon="🔍",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 # Custom CSS for better styling
-st.markdown("""
+st.markdown(
+    """
 <style>
     .main-header {
         font-size: 2.5rem;
@@ -182,14 +183,16 @@ st.markdown("""
         margin: 0;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # Initialize session state variables
-if 'search_results' not in st.session_state:
+if "search_results" not in st.session_state:
     st.session_state.search_results = None
-if 'scraped_texts' not in st.session_state:
+if "scraped_texts" not in st.session_state:
     st.session_state.scraped_texts = {}
-if 'quality_score' not in st.session_state:
+if "quality_score" not in st.session_state:
     st.session_state.quality_score = None
 if "input_value" not in st.session_state:
     st.session_state.input_value = ""
@@ -198,26 +201,36 @@ if "show_quality_check" not in st.session_state:
 
 # Title and description
 st.markdown("<h1 class='main-header'>🔍 Ask the Web</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-header'>Get citation-backed answers to your questions using web search and AI</p>",
-            unsafe_allow_html=True)
+st.markdown(
+    "<p class='sub-header'>Get citation-backed answers to your questions using web search and AI</p>",
+    unsafe_allow_html=True,
+)
 
 # Sidebar with info
 with st.sidebar:
     # Use emoji as logo instead of image
-    st.markdown("<div style='text-align: center; font-size: 5rem;'>🔍</div>", unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align: center;'>Ask the Web</h2>", unsafe_allow_html=True)
+    st.markdown(
+        "<div style='text-align: center; font-size: 5rem;'>🔍</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<h2 style='text-align: center;'>Ask the Web</h2>", unsafe_allow_html=True
+    )
 
     st.markdown("### About")
     st.write(
-        "Ask the Web uses search APIs to find relevant sources, extracts key information, and generates answers with proper citations.")
+        "Ask the Web uses search APIs to find relevant sources, extracts key information, and generates answers with proper citations."
+    )
 
     st.markdown("### How it works")
-    st.markdown("""
+    st.markdown(
+        """
     1. Enter your question
     2. We search the web for relevant sources
     3. AI generates an answer with citations
     4. Results are displayed with source links
-    """)
+    """
+    )
 
     # Telemetry section in sidebar (initially empty)
     st.markdown("### Telemetry")
@@ -226,8 +239,7 @@ with st.sidebar:
     # Options section
     st.markdown("### Options")
     st.session_state.show_quality_check = st.checkbox(
-        "Show Citation Quality Check",
-        value=st.session_state.show_quality_check
+        "Show Citation Quality Check", value=st.session_state.show_quality_check
     )
     if st.button("Clear Cache"):
         st.cache_data.clear()
@@ -243,12 +255,14 @@ with main_container:
             "Your Question",
             placeholder="Example: What are the benefits of meditation?",
             key="question_input",
-            value=st.session_state.input_value
+            value=st.session_state.input_value,
         )
 
         cols = st.columns([1, 1], gap="small")
         with cols[0]:
-            submit = st.form_submit_button("🔍 Search & Answer", use_container_width=True)
+            submit = st.form_submit_button(
+                "🔍 Ask", use_container_width=True
+            )
         with cols[1]:
             clear = st.form_submit_button("Clear", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
@@ -293,7 +307,7 @@ if submit and question:
         progress_bar.progress(30, text="Scraping content from sources...")
         scraped_texts = {}
         for source in search_results:
-            scraped_texts[source['url']] = scrape_page(source['url'])
+            scraped_texts[source["url"]] = scrape_page(source["url"])
         st.session_state.scraped_texts = scraped_texts
 
         # Generate answer
@@ -306,7 +320,9 @@ if submit and question:
         quality_results = validate_citations(answer, search_results, scraped_texts)
 
         # Recompute quality score based on unique citations in the answer
-        actual_citations = sorted(set(re.findall(r"\[\d+\]", answer)), key=lambda x: int(x.strip("[]")))
+        actual_citations = sorted(
+            set(re.findall(r"\[\d+\]", answer)), key=lambda x: int(x.strip("[]"))
+        )
         total_citations = len(actual_citations)
         valid_citations = 0
         seen_citations = set()
@@ -314,7 +330,11 @@ if submit and question:
             for detail in citation["details"]:
                 citation_num = detail["citation_num"]
                 citation_marker = f"[{citation_num}]"
-                if citation_marker in actual_citations and detail["valid"] and citation_marker not in seen_citations:
+                if (
+                    citation_marker in actual_citations
+                    and detail["valid"]
+                    and citation_marker not in seen_citations
+                ):
                     valid_citations += 1
                     seen_citations.add(citation_marker)
         if total_citations > 0:
@@ -342,7 +362,10 @@ if submit and question:
         progress_bar.empty()
 
         # Display quality score badge if toggle is enabled
-        if "show_quality_check" in st.session_state and st.session_state.show_quality_check:
+        if (
+            "show_quality_check" in st.session_state
+            and st.session_state.show_quality_check
+        ):
             quality_score = st.session_state.quality_score
             if "Excellent" in quality_score:
                 badge_class = "quality-excellent"
@@ -352,8 +375,10 @@ if submit and question:
                 badge_class = "quality-fair"
             else:
                 badge_class = "quality-poor"
-            st.markdown(f"<div class='quality-badge {badge_class}'>Citation Quality: {quality_score}</div>",
-                        unsafe_allow_html=True)
+            st.markdown(
+                f"<div class='quality-badge {badge_class}'>Citation Quality: {quality_score}</div>",
+                unsafe_allow_html=True,
+            )
 
         # Process answer for inline citation styling
         answer_html = answer
@@ -364,7 +389,9 @@ if submit and question:
 
         # Display answer in a nice container
         st.markdown("### Answer")
-        st.markdown(f"<div class='answer-container'>{answer_html}</div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='answer-container'>{answer_html}</div>", unsafe_allow_html=True
+        )
 
         # Format sources as a list
         st.markdown("### Sources")
@@ -376,7 +403,10 @@ if submit and question:
                     if len(source_parts) >= 2:
                         citation_label = source_parts[0].strip()
                         url = source_parts[-1].strip()
-                        st.markdown(f"- {citation_label} - [{url}]({url})", unsafe_allow_html=True)
+                        st.markdown(
+                            f"- {citation_label} - [{url}]({url})",
+                            unsafe_allow_html=True,
+                        )
                     else:
                         st.markdown(f"- {source.strip()}", unsafe_allow_html=True)
         else:
@@ -387,16 +417,20 @@ if submit and question:
             st.markdown("<div class='telemetry-card'>", unsafe_allow_html=True)
             st.markdown(
                 f"<span class='metric-label'>Total Time:</span> <span class='metric-value'>{telemetry['latency']:.2f}s</span>",
-                unsafe_allow_html=True)
+                unsafe_allow_html=True,
+            )
             st.markdown(
                 f"<span class='metric-label'>Input Tokens:</span> <span class='metric-value'>{telemetry['input_tokens']}</span>",
-                unsafe_allow_html=True)
+                unsafe_allow_html=True,
+            )
             st.markdown(
                 f"<span class='metric-label'>Output Tokens:</span> <span class='metric-value'>{telemetry['output_tokens']}</span>",
-                unsafe_allow_html=True)
+                unsafe_allow_html=True,
+            )
             st.markdown(
                 f"<span class='metric-label'>Total Tokens:</span> <span class='metric-value'>{telemetry['total_tokens']}</span>",
-                unsafe_allow_html=True)
+                unsafe_allow_html=True,
+            )
             st.markdown("</div>", unsafe_allow_html=True)
 
         # Debug panel with better styling
@@ -404,19 +438,29 @@ if submit and question:
             st.json(search_results)
 
         # Show Citation Quality Check debug only if toggle is enabled
-        if "show_quality_check" in st.session_state and st.session_state.show_quality_check:
+        if (
+            "show_quality_check" in st.session_state
+            and st.session_state.show_quality_check
+        ):
             with st.expander("Debug: Citation Quality Check"):
                 st.json(quality_results)
 
     except Exception as e:
-        st.markdown(f"<div class='error-message'>Error: {str(e)}</div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='error-message'>Error: {str(e)}</div>", unsafe_allow_html=True
+        )
         st.error(f"An error occurred: {str(e)}")
         if "cache" in str(e).lower():
-            st.warning("A caching error occurred. Try clearing the cache from the sidebar.")
+            st.warning(
+                "A caching error occurred. Try clearing the cache from the sidebar."
+            )
 
 # Footer - fixed at bottom
-st.markdown("""
+st.markdown(
+    """
 <div class='footer'>
     <p>Created for SkillCat Work Sample. Powered by Streamlit + Gemini.</p>
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)

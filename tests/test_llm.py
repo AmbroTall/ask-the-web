@@ -1,87 +1,49 @@
-# tests/test_llm.py
-
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from ask_the_web.src.llm import generate_answer
 
 
-@pytest.fixture
-def mock_search_results():
-    """Create mock search results."""
-    return [
-        {
-            "title": "Python Programming",
-            "url": "https://example.com/python",
-            "snippet": "Python is a programming language.",
-        },
-        {
-            "title": "Learn Python",
-            "url": "https://example.com/learn-python",
-            "snippet": "Learn Python basics.",
-        },
+@patch("ask_the_web.src.llm.genai.GenerativeModel")
+def test_generate_answer_success(mock_model):
+    """Test successful answer generation with citations."""
+    question = "What is meditation?"
+    sources = [
+        {"title": "Source 1", "url": "http://example.com"},
+        {"title": "Source 2", "url": "http://example.com/2"},
     ]
 
+    # Mock scrape_page
+    with patch("ask_the_web.src.llm.scrape_page") as mock_scrape:
+        mock_scrape.return_value = "Meditation is a practice to reduce stress."
 
-def test_generate_answer_successful(mock_search_results):
-    """Test successful answer generation."""
-    with patch("ask_the_web.src.llm.call_llm") as mock_llm:
-        mock_llm.return_value = (
-            "Python is a programming language [1]. It is easy to learn [2].",
-            "Sources:\n[1] - https://example.com/python\n[2] - https://example.com/learn-python",
+        # Mock LLM response
+        mock_instance = mock_model.return_value
+        mock_instance.generate_content.return_value.text = (
+            "Meditation is a practice to reduce stress [1].\n\n"
+            "Sources:\n"
+            "[1] Source 1 - http://example.com\n"
+            "[2] Source 2 - http://example.com/2"
         )
 
-        answer, sources_md = generate_answer("What is Python?", mock_search_results)
-        assert (
-            answer == "Python is a programming language [1]. It is easy to learn [2]."
-        )
-        assert (
-            sources_md
-            == "Sources:\n[1] - https://example.com/python\n[2] - https://example.com/learn-python"
-        )
-        assert "[1]" in answer
-        assert "[2]" in answer
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setenv("GEMINI_API_KEY", "test_key")
+            answer, sources_md = generate_answer(question, sources)
+            assert "Meditation is a practice to reduce stress [1]." in answer
+            assert "[1] Source 1 - http://example.com" in sources_md
+            assert "[2] Source 2 - http://example.com/2" in sources_md
 
 
-def test_generate_answer_no_search_results():
-    """Test answer generation with no search results."""
-    with patch("ask_the_web.src.llm.call_llm") as mock_llm:
-        mock_llm.return_value = ("No information available.", "Sources:\n")
+@patch("ask_the_web.src.llm.genai.GenerativeModel")
+def test_generate_answer_no_content(mock_model):
+    """Test handling of no scraped content."""
+    question = "What is meditation?"
+    sources = [{"title": "Source 1", "url": "http://example.com"}]
 
-        answer, sources_md = generate_answer("What is Python?", [])
-        assert answer == "No information available."
-        assert sources_md == "Sources:\n"
+    # Mock scrape_page to return empty content
+    with patch("ask_the_web.src.llm.scrape_page") as mock_scrape:
+        mock_scrape.return_value = ""
 
-
-def test_generate_answer_llm_error():
-    """Test handling of LLM error."""
-    with patch("ask_the_web.src.llm.call_llm", side_effect=Exception("LLM failed")):
-        answer, sources_md = generate_answer("What is Python?", mock_search_results)
-        assert answer == "Error generating answer."
-        assert sources_md == "Sources:\n"
-
-
-def test_generate_answer_invalid_response_format():
-    """Test handling of invalid LLM response format."""
-    with patch("ask_the_web.src.llm.call_llm") as mock_llm:
-        # Return a single string instead of a tuple
-        mock_llm.return_value = "Invalid response"
-
-        answer, sources_md = generate_answer("What is Python?", mock_search_results)
-        assert answer == "Error generating answer."
-        assert sources_md == "Sources:\n"
-
-
-def test_generate_answer_citations_missing():
-    """Test answer generation when citations are missing in the answer."""
-    with patch("ask_the_web.src.llm.call_llm") as mock_llm:
-        mock_llm.return_value = (
-            "Python is a programming language.",
-            "Sources:\n[1] - https://example.com/python\n[2] - https://example.com/learn-python",
-        )
-
-        answer, sources_md = generate_answer("What is Python?", mock_search_results)
-        assert answer == "Python is a programming language."
-        assert (
-            sources_md
-            == "Sources:\n[1] - https://example.com/python\n[2] - https://example.com/learn-python"
-        )
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setenv("GEMINI_API_KEY", "test_key")
+            with pytest.raises(ValueError, match="No valid content could be scraped"):
+                generate_answer(question, sources)

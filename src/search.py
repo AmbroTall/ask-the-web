@@ -19,7 +19,7 @@ def search_web(query: str) -> list[dict]:
         list: List of dictionaries containing title and url for each result
     """
     api_key = os.getenv("SEARCH_API_KEY")
-    url = os.getenv("URL")
+    url = "https://google.serper.dev/search"
     if not api_key:
         raise ValueError("SEARCH_API_KEY not set.")
     if not url:
