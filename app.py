@@ -1,6 +1,7 @@
 import streamlit as st
 import time
 import re
+from typing import Dict, List, Optional, cast
 from src.search import search_web
 from src.scrape import scrape_page
 from src.llm import generate_answer
@@ -82,7 +83,6 @@ st.markdown(
         border: none !important;
         color: #E0E0E0;
     }
-  
     .telemetry-card {
         background-color: #F5F5F5;
         border-radius: 5px;
@@ -157,26 +157,21 @@ st.markdown(
     .fullScreenFrame > div:first-child {
         height: 100%;
     }
-    /* Override Streamlit's default styling for form elements */
     .stForm [data-testid="stFormSubmitButton"] {
         width: 100% !important;
     }
-    /* Fix for form layout */
     [data-testid="column"] [data-testid="stFormSubmitButton"] {
         width: 100% !important;
     }
-    /* Remove the red focus outline */
     .stTextInput > div > div > input:focus {
         box-shadow: none !important;
         outline: none !important;
         border-color: #90A4AE !important;
     }
-    /* Fix for button width and alignment */
     [data-testid="stHorizontalBlock"] [data-testid="column"] {
         width: 100% !important;
         padding: 0 5px;
     }
-    /* Set equal button spacing and sizing */
     .stForm [data-testid="stFormSubmitButton"] button {
         width: 100% !important;
         display: inline-block;
@@ -208,7 +203,6 @@ st.markdown(
 
 # Sidebar with info
 with st.sidebar:
-    # Use emoji as logo instead of image
     st.markdown(
         "<div style='text-align: center; font-size: 5rem;'>🔍</div>",
         unsafe_allow_html=True,
@@ -248,7 +242,6 @@ with st.sidebar:
 # Main content - use a container for better layout
 main_container = st.container()
 with main_container:
-    # Input form - ensure it uses full width
     st.markdown("<div style='width: 100%;'>", unsafe_allow_html=True)
     with st.form("question_form", clear_on_submit=False):
         question = st.text_input(
@@ -260,9 +253,7 @@ with main_container:
 
         cols = st.columns([1, 1], gap="small")
         with cols[0]:
-            submit = st.form_submit_button(
-                "🔍 Ask", use_container_width=True
-            )
+            submit = st.form_submit_button("🔍 Ask", use_container_width=True)
         with cols[1]:
             clear = st.form_submit_button("Clear", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
@@ -273,13 +264,10 @@ with main_container:
 
     # Clear form if clear button is pressed
     if clear:
-        # Reset the input value
         st.session_state.input_value = ""
-        # Reset other session state variables
         st.session_state.search_results = None
         st.session_state.scraped_texts = {}
         st.session_state.quality_score = None
-        # Rerun to update the UI
         st.rerun()
 
 # Results section
@@ -305,7 +293,7 @@ if submit and question:
 
         # Scrape content from each source
         progress_bar.progress(30, text="Scraping content from sources...")
-        scraped_texts = {}
+        scraped_texts: Dict[str, Optional[str]] = {}
         for source in search_results:
             scraped_texts[source["url"]] = scrape_page(source["url"])
         st.session_state.scraped_texts = scraped_texts
@@ -317,9 +305,15 @@ if submit and question:
         # Run quality check
         progress_bar.progress(80, text="Validating citation quality...")
         st.session_state.quality_score = None  # Reset to avoid stale data
-        quality_results = validate_citations(answer, search_results, scraped_texts)
+        # Convert scraped_texts to Dict[str, str] by replacing None with ""
+        scraped_texts_non_null = {
+            k: v if v is not None else "" for k, v in scraped_texts.items()
+        }
+        quality_results = validate_citations(
+            answer, search_results, scraped_texts_non_null
+        )
 
-        # Recompute quality score based on unique citations in the answer
+        # Recompute quality score based on unique   unique citations in the answer
         actual_citations = sorted(
             set(re.findall(r"\[\d+\]", answer)), key=lambda x: int(x.strip("[]"))
         )
@@ -354,7 +348,9 @@ if submit and question:
 
         # Track telemetry and calculate actual latency
         total_time = time.time() - start_time
-        telemetry = track_telemetry(question, search_results, scraped_texts, answer)
+        telemetry = track_telemetry(
+            question, search_results, scraped_texts_non_null, answer
+        )
         telemetry["latency"] = total_time  # Use actual end-to-end time
 
         progress_bar.progress(100, text="Done!")
@@ -395,11 +391,15 @@ if submit and question:
 
         # Format sources as a list
         st.markdown("### Sources")
-        if sources_md:
-            sources_list = sources_md.replace("Sources:", "").strip().split("\n")
-            for source in sources_list:
-                if source.strip():
-                    source_parts = source.split(" - ")
+        sources_md_typed: Optional[str] = cast(Optional[str], sources_md)  # Force type
+        if sources_md_typed is not None:
+            sources_list: List[str] = (
+                sources_md_typed.replace("Sources:", "").strip().split("\n")
+            )  # type: ignore[assignment]
+            for source in sources_list:  # type: ignore
+                source = source.strip()  # type: ignore[attr-defined]
+                if source:
+                    source_parts = source.split(" - ")  # type: ignore[attr-defined]
                     if len(source_parts) >= 2:
                         citation_label = source_parts[0].strip()
                         url = source_parts[-1].strip()
@@ -408,7 +408,7 @@ if submit and question:
                             unsafe_allow_html=True,
                         )
                     else:
-                        st.markdown(f"- {source.strip()}", unsafe_allow_html=True)
+                        st.markdown(f"- {source}", unsafe_allow_html=True)
         else:
             st.write("No sources available.")
 

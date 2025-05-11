@@ -1,6 +1,7 @@
 import pytest
 import responses
-from ask_the_web.src.search import search_web
+from src.search import search_web
+
 
 @responses.activate
 def test_search_web_success():
@@ -25,6 +26,7 @@ def test_search_web_success():
         assert results[0]["title"] == "Result 1"
         assert results[0]["url"] == "http://example.com/1"
 
+
 @responses.activate
 def test_search_web_empty():
     """Test empty search results."""
@@ -39,6 +41,7 @@ def test_search_web_empty():
         mp.setenv("URL", "https://google.serper.dev/search")
         results = search_web("test streamlit")
         assert results == []
+
 
 @responses.activate
 def test_search_web_error():

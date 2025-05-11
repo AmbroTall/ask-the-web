@@ -4,6 +4,7 @@ Module to generate answers using Gemini LLM based on scraped content.
 
 import os
 import time
+from typing import List, Dict, Tuple, Optional
 import google.generativeai as genai
 from dotenv import load_dotenv
 from .scrape import scrape_page
@@ -13,7 +14,9 @@ load_dotenv()
 
 
 @st.cache_data
-def generate_answer(question: str, sources: list[dict]) -> tuple[str, str]:
+def generate_answer(
+    question: str, sources: List[Dict[str, str]]
+) -> Tuple[str, Optional[str]]:
     """
     Generate answer with citations using Gemini.
 
@@ -22,7 +25,7 @@ def generate_answer(question: str, sources: list[dict]) -> tuple[str, str]:
         sources: List of dictionaries containing title and url for each source
 
     Returns:
-        tuple: (answer text with citations, markdown formatted sources)
+        Tuple of (answer text with citations, markdown-formatted sources or None)
     """
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
@@ -98,7 +101,9 @@ def generate_answer(question: str, sources: list[dict]) -> tuple[str, str]:
             sources_list = "\n".join(
                 [f"[{i + 1}] {s['title']} - {s['url']}" for i, s in enumerate(sources)]
             )
-            return answer_text.strip(), f"Sources:\n{sources_list}"
+            return answer_text.strip(), (
+                f"Sources:\n{sources_list}" if sources_list else None
+            )
 
     except Exception as e:
         print(f"LLM error: {e}")

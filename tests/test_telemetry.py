@@ -1,5 +1,5 @@
 import pytest
-from ask_the_web.src.telemetry import count_tokens, track_telemetry
+from src.telemetry import count_tokens, track_telemetry
 
 
 def test_count_tokens():
@@ -28,7 +28,9 @@ def test_track_telemetry():
     assert telemetry["source_tokens"] > 0
     assert telemetry["output_tokens"] > 0
     assert telemetry["total_tokens"] == (
-            telemetry["input_tokens"] + telemetry["source_tokens"] + telemetry["output_tokens"]
+        telemetry["input_tokens"]
+        + telemetry["source_tokens"]
+        + telemetry["output_tokens"]
     )
     assert telemetry["source_count"] == 1
     assert telemetry["question_length"] == len(question)

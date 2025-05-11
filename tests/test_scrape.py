@@ -1,7 +1,8 @@
 import pytest
 import responses
-from ask_the_web.src.scrape import scrape_page
+from src.scrape import scrape_page
 from bs4 import BeautifulSoup
+
 
 @pytest.fixture
 def mock_html():
@@ -22,6 +23,7 @@ def mock_html():
     </html>
     """
 
+
 @responses.activate
 def test_scrape_page_success(mock_html):
     """Test successful content extraction from a valid webpage."""
@@ -36,9 +38,10 @@ def test_scrape_page_success(mock_html):
     assert "This is the main content" in result
     assert "Another paragraph" in result
     assert "Header content" not in result  # Header should be removed
-    assert "Navigation" not in result     # Nav should be removed
-    assert "var x" not in result          # Script should be removed
-    assert len(result) <= 8000            # Content length limit
+    assert "Navigation" not in result  # Nav should be removed
+    assert "var x" not in result  # Script should be removed
+    assert len(result) <= 8000  # Content length limit
+
 
 @responses.activate
 def test_scrape_page_non_html():
@@ -53,6 +56,7 @@ def test_scrape_page_non_html():
     result = scrape_page("http://example.com/image.png")
     assert result == ""  # Should return empty string for non-HTML
 
+
 @responses.activate
 def test_scrape_page_404_error():
     """Test handling of 404 HTTP error."""
@@ -65,10 +69,12 @@ def test_scrape_page_404_error():
     result = scrape_page("http://example3435.com")
     assert result == ""  # Should return empty string on HTTP error
 
+
 def test_scrape_page_invalid_url():
     """Test handling of invalid URL."""
     result = scrape_page("invalid-url")
     assert result == ""  # Should return empty string for invalid URL
+
 
 @responses.activate
 def test_scrape_page_retry_timeout():

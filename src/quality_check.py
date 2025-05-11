@@ -70,9 +70,9 @@ def validate_citations(
         return {"overall_score": "N/A", "validation_error": str(e), "citations": []}
 
     citations_data = extract_citations(answer)
-    results = {"overall_score": "Pending", "citations": []}
+    results: Dict[str, Any] = {"overall_score": "Pending", "citations": []}
 
-    validation_prompt_parts = [
+    validation_prompt_parts: List[str] = [
         "Task: Verify if the cited information is supported by the sources.\n"
     ]
 
@@ -163,9 +163,7 @@ def validate_citations(
                 }
             )
 
-        valid_sentences = sum(
-            1 for c in results["citations"] if c["validation"] == "Valid"
-        )
+        valid_sentences = sum(c["validation"] == "Valid" for c in results["citations"])
         total_sentences = len(results["citations"])
 
         if total_sentences > 0:

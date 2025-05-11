@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import patch
-from ask_the_web.src.llm import generate_answer
+from src.llm import generate_answer
 
 
-@patch("ask_the_web.src.llm.genai.GenerativeModel")
+@patch("src.llm.genai.GenerativeModel")
 def test_generate_answer_success(mock_model):
     """Test successful answer generation with citations."""
     question = "What is meditation?"
@@ -13,7 +13,7 @@ def test_generate_answer_success(mock_model):
     ]
 
     # Mock scrape_page
-    with patch("ask_the_web.src.llm.scrape_page") as mock_scrape:
+    with patch("src.llm.scrape_page") as mock_scrape:
         mock_scrape.return_value = "Meditation is a practice to reduce stress."
 
         # Mock LLM response
@@ -33,14 +33,14 @@ def test_generate_answer_success(mock_model):
             assert "[2] Source 2 - http://example.com/2" in sources_md
 
 
-@patch("ask_the_web.src.llm.genai.GenerativeModel")
+@patch("src.llm.genai.GenerativeModel")
 def test_generate_answer_no_content(mock_model):
     """Test handling of no scraped content."""
     question = "What is meditation?"
     sources = [{"title": "Source 1", "url": "http://example.com"}]
 
     # Mock scrape_page to return empty content
-    with patch("ask_the_web.src.llm.scrape_page") as mock_scrape:
+    with patch("src.llm.scrape_page") as mock_scrape:
         mock_scrape.return_value = ""
 
         with pytest.MonkeyPatch.context() as mp:

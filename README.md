@@ -1,6 +1,37 @@
 # Ask the Web - Streamlit Q&A with Citations
 
-A Streamlit app that answers user questions by searching the web, extracting relevant content, and generating responses with citations using Gemini LLM. Includes optional stretch features: telemetry and citation quality validation.
+Ask the Web is a Streamlit application that answers user questions by searching the web, extracting relevant content, and generating responses with citations using the Gemini LLM. It includes stretch features: telemetry for token and latency metrics and citation quality validation.
+
+## Project Structure
+```
+ask_the_web/
+├── .github/
+│   └── workflows/
+│       └── ci.yml          # GitHub Actions CI pipeline
+├── ask_the_web/
+│   ├── __init__.py        # Marks ask_the_web as a package
+│   └── src/
+│       ├── __init__.py
+│       ├── app.py         # Streamlit UI and main app logic
+│       ├── search.py      # SerpAPI search integration
+│       ├── scrape.py      # Web content extraction
+│       ├── llm.py         # Gemini LLM answer generation
+│       ├── quality_check.py # Citation validation
+│       └── telemetry.py   # Token and latency metrics
+├── tests/
+│   ├── __init__.py
+│   ├── test_search.py
+│   ├── test_scrape.py
+│   ├── test_quality_check.py
+│   ├── test_llm.py
+│   └── test_telemetry.py
+├── .env.example           # Example environment variables
+├── .flake8               # Flake8 linting config
+├── mypy.ini              # Mypy type checking config
+├── requirements.txt       # Python dependencies
+├── Dockerfile            # Docker setup
+└── README.md
+```
 
 ## Architecture
 
@@ -27,53 +58,46 @@ A Streamlit app that answers user questions by searching the web, extracting rel
 
 ## Setup (≤ 5 Commands)
 
-### Clone the repository  
-```bash
-git clone https://github.com/yourusername/ask-the-web.git
-cd ask-the-web
-```
-
-### Set up environment variables  
-```bash
-cp .env.example .env  # Edit .env with your SerpAPI and Gemini API keys
-```
-
-### Run with Docker (recommended)  
-```bash
-docker build -t ask-web .
-docker run -p 8501:8501 ask-web
-```
-
-### Alternative (Local Setup):  
-1. Create a virtual environment: 
+1. **Clone the repository**  
    ```bash
-   python -m venv venv && source venv/bin/activate
+   git clone https://github.com/yourusername/ask-the-web.git
+   cd ask-the-web
    ```
-   (Windows: `venv\Scripts\activate`)  
 
-2. Install dependencies: 
+2. **Set up environment variables**  
    ```bash
-   pip install -r requirements.txt
-   ```  
-
-3. Run: 
-   ```bash
-   streamlit run app.py
+   cp .env.example .env
    ```
+   Edit .env to add your SerpAPI (SEARCH_API_KEY), Gemini API (GEMINI_API_KEY), and API URL (URL) keys.
+
+3. **Run with Docker (recommended)**  
+   ```bash
+   docker build -t ask-web .
+   docker run -p 8501:8501 --env-file .env ask-web
+   ```
+
+### Alternative (Local Setup):
+Requires Python 3.12.
+```bash
+python -m venv venv && source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+streamlit run ask_the_web/src/app.py
+```
 
 ## How It Works
 
-1. **Search**: Queries SerpAPI to fetch up to 5 organic search results.  
+- **Search**: Queries SerpAPI to fetch up to 5 organic search results.  
 
-2. **Scrape**: Uses BeautifulSoup to extract main content from each result (removes scripts, nav, etc.).  
+- **Scrape**: Uses BeautifulSoup to extract main content from each result, removing scripts, navigation, etc.  
 
-3. **Generate**: Passes the question and scraped texts to Gemini (gemini-1.5-flash) for an answer.  
+- **Generate**: Passes the question and scraped texts to Gemini (gemini-1.5-flash) to generate an answer.  
 
-4. **Cite**: Formats citations as [n] and lists sources in a "Sources" section.  
+- **Cite**: Formats citations as [n] and lists sources in a "Sources" section.
 
-### Stretch Features:  
-- **Telemetry sidebar**: Displays total tokens and latency per query.  
-- **Citation Quality Check**: Validates citations using a second LLM call, showing a pass/fail badge.
+### Stretch Features:
+- **Telemetry Sidebar**: Shows total tokens and latency per query.  
+
+- **Citation Quality Check**: Validates citations with a second LLM call, displaying a pass/fail badge.
 
 ## LLM Prompt & Rationale
 
@@ -93,8 +117,8 @@ INSTRUCTIONS:
 ...
 ```
 
-### Rationale: 
-The prompt was iterated to enforce strict source usage and citation discipline, minimizing hallucinations. Initial versions lacked clarity on citation frequency, leading to over-citation; the final version balances accuracy and readability.
+### Rationale:
+The prompt ensures strict adherence to provided sources, minimizing LLM hallucinations. It uses clear instructions to enforce concise answers and proper citation formatting, with iterations to balance readability and accuracy.
 
 ## Testing
 
@@ -103,18 +127,57 @@ Run tests with:
 pytest
 ```
 
-### Coverage:  
-- **scrape.py**: Tests content extraction and error handling.  
+Run linting with:  
+```bash
+flake8 ask_the_web tests
+```
+
+Run type checking with:  
+```bash
+mypy ask_the_web tests
+```
+
+Generate coverage report:  
+```bash
+pytest --cov=ask_the_web/src --cov-report=html
+```
+
+View CI test results: https://example.com/test-results (screenshots of passing tests).
+
+### Coverage:
+- **scrape.py**: Tests content extraction and error handling (invalid URLs, HTTP errors).  
 - **quality_check.py**: Tests citation extraction and validation logic.  
-- **search.py**: Tests API response parsing.
+- **search.py**: Tests API response parsing and error handling.  
+- **llm.py**: Tests answer generation and citation formatting.  
+- **telemetry.py**: Tests token counting and telemetry tracking.
+
+## CI/CD
+A GitHub Actions workflow (.github/workflows/ci.yml) runs on every push or pull request to the main branch. It:
+- Lints code with Flake8 to ensure PEP 8 compliance.
+- Checks type hints with Mypy for type safety.
+- Runs unit tests with pytest and generates a coverage report.
+- Builds and tests the Docker image to ensure it starts on port 8501.
+
+To verify the CI pipeline:
+1. Push changes to the main branch or open a pull request.
+2. Check the workflow status in the GitHub "Actions" tab.
+3. Review linting, type checking, test, and Docker build logs for failures.
+
+Note: Tests, linting, and type checking use mock API keys (SEARCH_API_KEY, GEMINI_API_KEY) to avoid real API calls. For integration tests with real APIs, configure GitHub Secrets.
 
 ## Known Limitations
 
-- **Search**: SerpAPI free tier has rate limits; results may vary by query.  
-- **Scrape**: Fails on JavaScript-heavy sites (no headless browser support).  
-- **LLM**: 8000-char limit per source may truncate content (notified in debug).  
-- **Quality Check**: LLM-based validation may have false positives/negatives.  
-- **Performance**: End-to-end latency is 5-15s due to sequential processing.
+- **Search**: SerpAPI free tier has rate limits, which may affect results.  
+- **Scrape**: Fails on JavaScript-heavy sites (no headless browser).  
+- **LLM**: 8000-character limit per source may truncate content (notified in debug).  
+- **Quality Check**: LLM-based validation may produce false positives/negatives.  
+- **Performance**: End-to-end latency is 5-15 seconds due to sequential processing.
+
+## Troubleshooting
+- **Streamlit Cache**: Clear cache with `streamlit cache clear` or the sidebar "Clear Cache" button.  
+- **API Rate Limits**: Verify valid API keys and check SerpAPI/Gemini limits.  
+- **Docker**: Pass .env with `--env-file .env`.  
+- **Linting/Type Errors**: Run `flake8 ask_the_web tests` or `mypy ask_the_web tests` locally to fix issues.
 
 ## Dependencies
 
@@ -124,12 +187,14 @@ pytest
 - **requests**: HTTP requests  
 - **python-dotenv**: Environment variable management  
 - **pytest**: Testing framework  
-- **tiktoken**: Token counting for telemetry
+- **tiktoken**: Token counting for telemetry  
+- **flake8**: Linting  
+- **mypy**: Type checking
 
 See `requirements.txt` for full list.
 
 ## Credits
 
 - Built for SkillCat work sample.  
-- Uses SerpAPI free tier for search ([SerpAPI license](https://serpapi.com/terms)).  
+- Uses SerpAPI free tier [SerpAPI license](https://serpapi.com/terms).  
 - BeautifulSoup and other libraries per their licenses.
