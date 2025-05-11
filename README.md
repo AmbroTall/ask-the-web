@@ -12,7 +12,7 @@ ask_the_web/
 │   ├── __init__.py        # Marks ask_the_web as a package
 │   └── src/
 │       ├── __init__.py
-│       ├── search.py      # SerpAPI search integration
+│       ├── search.py      # Serper API search integration
 │       ├── scrape.py      # Web content extraction
 │       ├── llm.py         # Gemini LLM answer generation
 │       ├── quality_check.py # Citation validation
@@ -24,9 +24,9 @@ ask_the_web/
 │   ├── test_quality_check.py
 │   ├── test_llm.py
 │   └── test_telemetry.py
-├── .env.example          # Example environment variables
+├── .env                  # Example environment variables
 ├── app.py                # Streamlit UI and main app logic
-├── mypy.ini              # Mypy type checking config
+├── AmbroseCv.pdf         # My resume attached
 ├── requirements.txt      # Python dependencies
 ├── Dockerfile            # Docker setup
 └── README.md
@@ -46,7 +46,7 @@ ask_the_web/
 ┌───────┴─────────────┬──────────────┬──────────────┐
 │ ┌───────────┐ ┌────▼─────┐ ┌────▼─────┐ ┌────────▼─────┐
 │ │ search.py │ │ scrape.py │ │  llm.py  │ │ telemetry.py │
-│ │(SerpAPI)  │ │(Beautiful │ │ (Gemini) │ │ (metrics)    │
+│ │(Serper)   │ │(Beautiful │ │ (Gemini) │ │ (metrics)    │
 │ └───────────┘ │ Soup)     │ └────┬─────┘ └──────────────┘
 └───────────────┴───────────┘      │
                            ┌───────▼─────────┐
@@ -65,9 +65,11 @@ ask_the_web/
 
 2. **Set up environment variables**  
    ```bash
-   cp .env.example .env
+   cp .env .env
    ```
-   Edit .env to add your SerpAPI (SEARCH_API_KEY), Gemini API (GEMINI_API_KEY), and API URL (URL) keys.
+   Edit .env to add your Serper API (SEARCH_API_KEY), and Gemini API (GEMINI_API_KEY).
+   
+   Note: I have provided the .env intentionally for evaluation and testing purposes since the keys are free tier. 
 
 3. **Run with Docker (recommended)**  
    ```bash
@@ -85,7 +87,7 @@ streamlit run ask_the_web/src/app.py
 
 ## How It Works
 
-- **Search**: Queries SerpAPI to fetch up to 5 organic search results.  
+- **Search**: Queries Serper API (https://google.serper.dev/search) to fetch up to 5 organic search results.  
 
 - **Scrape**: Uses BeautifulSoup to extract main content from each result, removing scripts, navigation, etc.  
 
@@ -187,11 +189,11 @@ To verify the CI pipeline:
 2. Check the workflow status in the GitHub "Actions" tab.
 3. Review linting, type checking, test, and Docker build logs for failures.
 
-Note: Tests, linting, and type checking use mock API keys (SEARCH_API_KEY, GEMINI_API_KEY) to avoid real API calls. For integration tests with real APIs, configure GitHub Secrets.
+Note: Tests, linting, and type checking use mock API keys (SEARCH_API_KEY, GEMINI_API_KEY) to avoid real API calls.
 
 ## Known Limitations
 
-- **Search**: SerpAPI free tier has rate limits, which may affect results.  
+- **Search**: Serper API free tier has rate limits, which may affect results.  
 - **Scrape**: Fails on JavaScript-heavy sites (no headless browser).  
 - **LLM**: 8000-character limit per source may truncate content (notified in debug).  
 - **Quality Check**: LLM-based validation may produce false positives/negatives.  
@@ -199,7 +201,7 @@ Note: Tests, linting, and type checking use mock API keys (SEARCH_API_KEY, GEMIN
 
 ## Troubleshooting
 - **Streamlit Cache**: Clear cache with `streamlit cache clear` or the sidebar "Clear Cache" button.  
-- **API Rate Limits**: Verify valid API keys and check SerpAPI/Gemini limits.  
+- **API Rate Limits**: Verify valid API keys and check Serper/Gemini limits.  
 - **Docker**: Pass .env with `--env-file .env`.  
 - **Linting/Type Errors**: Run `flake8 ask_the_web tests` or `mypy ask_the_web tests` locally to fix issues.
 
@@ -220,5 +222,4 @@ See `requirements.txt` for full list.
 ## Credits
 
 - Built for SkillCat work sample.  
-- Uses SerpAPI free tier [SerpAPI license](https://serpapi.com/terms).  
-  - BeautifulSoup and other libraries per their licenses.                                                                                                      
+- Uses Serper Google Search API [Serper API](https://google.serper.dev).  
