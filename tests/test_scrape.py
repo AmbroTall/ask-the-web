@@ -1,7 +1,8 @@
+"""Test src/scrape.py."""
+
 import pytest
 import responses
 from src.scrape import scrape_page
-from bs4 import BeautifulSoup
 
 
 @pytest.fixture

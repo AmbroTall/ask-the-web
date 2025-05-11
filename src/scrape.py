@@ -1,3 +1,5 @@
+"""Module to scrape the sources' text."""
+
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -12,7 +14,8 @@ def scrape_page(
     url: str, max_retries: int = 3, backoff_factor: float = 1.5
 ) -> Optional[str]:
     """
-    Extract main text content from a webpage with robust error handling and retries.
+    Extract main text content from a webpage with robust error handling and
+    retries.
 
     Args:
         url: The URL to scrape
@@ -33,8 +36,11 @@ def scrape_page(
         return ""
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/"
+                      "537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 "
+                      "Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,"
+                  "image/webp,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
     }
 
@@ -84,7 +90,9 @@ def scrape_page(
             )
             if content_elements:
                 for element in content_elements:
-                    main_content += element.get_text(separator=" ", strip=True) + " "
+                    main_content += element.get_text(
+                        separator=" ", strip=True
+                    ) + " "
 
             # If main content sections weren't found, use paragraphs
             if not main_content:
@@ -123,7 +131,9 @@ def scrape_page(
                 502,
                 503,
             ]:
-                print(f"HTTP error {e.response.status_code} for {url}: {str(e)}")
+                print(
+                    f"HTTP error {e.response.status_code} for {url}: {str(e)}"
+                )
                 if attempt == max_retries - 1:
                     return ""
             else:
@@ -147,7 +157,8 @@ def scrape_page(
         # Wait before retrying with exponential backoff
         wait_time = backoff_factor * (2**attempt)
         print(
-            f"Retrying {url} in {wait_time:.1f} seconds... (Attempt {attempt + 1}/{max_retries})"
+            f"Retrying {url} in {wait_time:.1f} seconds... "
+            f"(Attempt {attempt + 1}/{max_retries})"
         )
         time.sleep(wait_time)
 

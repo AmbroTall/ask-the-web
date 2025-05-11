@@ -1,3 +1,5 @@
+"""Module to perform free public search."""
+
 import json
 import os
 import requests
@@ -10,7 +12,8 @@ load_dotenv()
 @st.cache_data
 def search_web(query: str) -> list[dict]:
     """
-    Query a web search API and return up to 5 organic results with title and URL.
+    Query a web search API and return up to 5 organic results with title and
+    URL.
 
     Args:
         query: The search query
@@ -28,11 +31,15 @@ def search_web(query: str) -> list[dict]:
     payload = json.dumps({"q": query, "gl": "ke"})
     headers = {"X-API-KEY": api_key, "Content-Type": "application/json"}
     try:
-        response = requests.post(url, headers=headers, data=payload, timeout=10)
+        response = requests.post(
+            url, headers=headers, data=payload, timeout=10
+        )
         response.raise_for_status()
         raw_results = response.json()
         results = raw_results.get("organic", [])
-        parsed_results = [{"title": r["title"], "url": r["link"]} for r in results[:5]]
+        parsed_results = [
+            {"title": r["title"], "url": r["link"]} for r in results[:5]
+        ]
         return parsed_results
     except requests.RequestException as e:
         print(f"Search error: {e}")

@@ -1,4 +1,5 @@
-import pytest
+"""Test src/telementry.py"""
+
 from src.telemetry import count_tokens, track_telemetry
 
 

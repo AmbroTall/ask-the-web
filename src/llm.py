@@ -25,7 +25,8 @@ def generate_answer(
         sources: List of dictionaries containing title and url for each source
 
     Returns:
-        Tuple of (answer text with citations, markdown-formatted sources or None)
+        Tuple of (answer text with citations, markdown-formatted sources or
+        None)
     """
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
@@ -99,7 +100,8 @@ def generate_answer(
             return answer.strip(), "Sources:" + sources_md.strip()
         else:
             sources_list = "\n".join(
-                [f"[{i + 1}] {s['title']} - {s['url']}" for i, s in enumerate(sources)]
+                [f"[{i + 1}] {s['title']} - {s['url']}"
+                 for i, s in enumerate(sources)]
             )
             return answer_text.strip(), (
                 f"Sources:\n{sources_list}" if sources_list else None

@@ -1,3 +1,8 @@
+"""
+Web application for answering user questions with citation-backed responses
+using web search and AI.
+"""
+
 import streamlit as st
 import time
 import re
@@ -195,9 +200,13 @@ if "show_quality_check" not in st.session_state:
     st.session_state.show_quality_check = False
 
 # Title and description
-st.markdown("<h1 class='main-header'>🔍 Ask the Web</h1>", unsafe_allow_html=True)
 st.markdown(
-    "<p class='sub-header'>Get citation-backed answers to your questions using web search and AI</p>",
+    "<h1 class='main-header'>🔍 Ask the Web</h1>", unsafe_allow_html=True
+)
+st.markdown(
+    "<p class='sub-header'>Get citation-backed answers "
+    "to your questions using "
+    "web search and AI</p>",
     unsafe_allow_html=True,
 )
 
@@ -208,12 +217,14 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
     st.markdown(
-        "<h2 style='text-align: center;'>Ask the Web</h2>", unsafe_allow_html=True
+        "<h2 style='text-align: center;'>Ask the Web</h2>",
+        unsafe_allow_html=True
     )
 
     st.markdown("### About")
     st.write(
-        "Ask the Web uses search APIs to find relevant sources, extracts key information, and generates answers with proper citations."
+        "Ask the Web uses search APIs to find relevant sources, extracts key "
+        "information, and generates answers with proper citations."
     )
 
     st.markdown("### How it works")
@@ -233,7 +244,8 @@ with st.sidebar:
     # Options section
     st.markdown("### Options")
     st.session_state.show_quality_check = st.checkbox(
-        "Show Citation Quality Check", value=st.session_state.show_quality_check
+        "Show Citation Quality Check",
+        value=st.session_state.show_quality_check
     )
     if st.button("Clear Cache"):
         st.cache_data.clear()
@@ -285,7 +297,9 @@ if submit and question:
         st.session_state.search_results = search_results
 
         if not search_results:
-            st.error("No search results found. Please try a different question.")
+            st.error(
+                "No search results found. Please try a different question."
+            )
             st.stop()
 
         # Limit search results to 5
@@ -299,7 +313,9 @@ if submit and question:
         st.session_state.scraped_texts = scraped_texts
 
         # Generate answer
-        progress_bar.progress(50, text="Analyzing sources and generating answer...")
+        progress_bar.progress(
+            50, text="Analyzing sources and generating answer..."
+        )
         answer, sources_md = generate_answer(question, search_results)
 
         # Run quality check
@@ -313,9 +329,10 @@ if submit and question:
             answer, search_results, scraped_texts_non_null
         )
 
-        # Recompute quality score based on unique   unique citations in the answer
+        # Recompute quality score based on unique citations in the answer
         actual_citations = sorted(
-            set(re.findall(r"\[\d+\]", answer)), key=lambda x: int(x.strip("[]"))
+            set(re.findall(r"\[\d+\]", answer)),
+            key=lambda x: int(x.strip("[]"))
         )
         total_citations = len(actual_citations)
         valid_citations = 0
@@ -341,7 +358,10 @@ if submit and question:
                 quality_label = "Fair"
             else:
                 quality_label = "Poor"
-            quality_score = f"{quality_label} ({valid_citations}/{total_citations} valid citations, {percentage:.1f}%)"
+            quality_score = (
+                f"{quality_label} ({valid_citations}/{total_citations} "
+                f"valid citations, {percentage:.1f}%)"
+            )
         else:
             quality_score = "No citations to evaluate"
         st.session_state.quality_score = quality_score
@@ -372,7 +392,8 @@ if submit and question:
             else:
                 badge_class = "quality-poor"
             st.markdown(
-                f"<div class='quality-badge {badge_class}'>Citation Quality: {quality_score}</div>",
+                f"<div class='quality-badge {badge_class}'>Citation Quality: "
+                f"{quality_score}</div>",
                 unsafe_allow_html=True,
             )
 
@@ -381,17 +402,22 @@ if submit and question:
         for i in range(len(search_results)):
             citation_num = i + 1
             styled_citation = f"<span class='citation'>[{citation_num}]</span>"
-            answer_html = answer_html.replace(f"[{citation_num}]", styled_citation)
+            answer_html = answer_html.replace(
+                f"[{citation_num}]", styled_citation
+            )
 
         # Display answer in a nice container
         st.markdown("### Answer")
         st.markdown(
-            f"<div class='answer-container'>{answer_html}</div>", unsafe_allow_html=True
+            f"<div class='answer-container'>{answer_html}</div>",
+            unsafe_allow_html=True
         )
 
         # Format sources as a list
         st.markdown("### Sources")
-        sources_md_typed: Optional[str] = cast(Optional[str], sources_md)  # Force type
+        sources_md_typed: Optional[str] = cast(
+            Optional[str], sources_md
+        )  # Force type
         if sources_md_typed is not None:
             sources_list: List[str] = (
                 sources_md_typed.replace("Sources:", "").strip().split("\n")
@@ -399,7 +425,9 @@ if submit and question:
             for source in sources_list:  # type: ignore
                 source = source.strip()  # type: ignore[attr-defined]
                 if source:
-                    source_parts = source.split(" - ")  # type: ignore[attr-defined]
+                    source_parts = source.split(  # type: ignore
+                        " - "
+                    )
                     if len(source_parts) >= 2:
                         citation_label = source_parts[0].strip()
                         url = source_parts[-1].strip()
@@ -416,19 +444,27 @@ if submit and question:
         with telemetry_container:
             st.markdown("<div class='telemetry-card'>", unsafe_allow_html=True)
             st.markdown(
-                f"<span class='metric-label'>Total Time:</span> <span class='metric-value'>{telemetry['latency']:.2f}s</span>",
+                f"<span class='metric-label'>Total Time:</span> "
+                f"<span class='metric-value'>{telemetry['latency']:.2f}s"
+                f"</span>",
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<span class='metric-label'>Input Tokens:</span> <span class='metric-value'>{telemetry['input_tokens']}</span>",
+                f"<span class='metric-label'>Input Tokens:</span> "
+                f"<span class='metric-value'>{telemetry['input_tokens']}"
+                f"</span>",
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<span class='metric-label'>Output Tokens:</span> <span class='metric-value'>{telemetry['output_tokens']}</span>",
+                f"<span class='metric-label'>Output Tokens:</span> "
+                f"<span class='metric-value'>{telemetry['output_tokens']}"
+                f"</span>",
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<span class='metric-label'>Total Tokens:</span> <span class='metric-value'>{telemetry['total_tokens']}</span>",
+                f"<span class='metric-label'>Total Tokens:</span> "
+                f"<span class='metric-value'>{telemetry['total_tokens']}"
+                f"</span>",
                 unsafe_allow_html=True,
             )
             st.markdown("</div>", unsafe_allow_html=True)
@@ -447,12 +483,14 @@ if submit and question:
 
     except Exception as e:
         st.markdown(
-            f"<div class='error-message'>Error: {str(e)}</div>", unsafe_allow_html=True
+            f"<div class='error-message'>Error: {str(e)}</div>",
+            unsafe_allow_html=True
         )
         st.error(f"An error occurred: {str(e)}")
         if "cache" in str(e).lower():
             st.warning(
-                "A caching error occurred. Try clearing the cache from the sidebar."
+                "A caching error occurred. Try clearing the cache from the "
+                "sidebar."
             )
 
 # Footer - fixed at bottom

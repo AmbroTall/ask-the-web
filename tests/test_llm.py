@@ -1,3 +1,5 @@
+"""Test src/llm.py."""
+
 import pytest
 from unittest.mock import patch
 from src.llm import generate_answer
@@ -45,5 +47,7 @@ def test_generate_answer_no_content(mock_model):
 
         with pytest.MonkeyPatch.context() as mp:
             mp.setenv("GEMINI_API_KEY", "test_key")
-            with pytest.raises(ValueError, match="No valid content could be scraped"):
+            with pytest.raises(
+                    ValueError, match="No valid content could be scraped"
+            ):
                 generate_answer(question, sources)

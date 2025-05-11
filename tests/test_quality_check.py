@@ -1,4 +1,5 @@
-import pytest
+"""Test src/quality_check.py."""
+
 from unittest.mock import patch
 from src.quality_check import extract_citations, validate_citations
 
@@ -41,7 +42,10 @@ def test_validate_citations_success(mock_model):
 
     # Mock LLM response
     mock_instance = mock_model.return_value
-    mock_instance.generate_content.return_value.text = "Sentence 1, Citation [1]: YES - The source explicitly mentions stress reduction."
+    mock_instance.generate_content.return_value.text = (
+        "Sentence 1, Citation [1]: YES - The source explicitly mentions stress"
+        " reduction."
+    )
 
     result = validate_citations(answer, sources_data, scraped_texts)
     assert result["overall_score"].startswith("Excellent")
@@ -60,7 +64,8 @@ def test_validate_citations_invalid(mock_model):
     # Mock LLM response
     mock_instance = mock_model.return_value
     mock_instance.generate_content.return_value.text = (
-        "Sentence 1, Citation [1]: NO - The source does not mention curing cancer."
+        "Sentence 1, Citation [1]: NO - The source does not mention curing"
+        " cancer."
     )
 
     result = validate_citations(answer, sources_data, scraped_texts)

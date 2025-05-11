@@ -1,3 +1,5 @@
+"""Test src/search.py."""
+
 import pytest
 import responses
 from src.search import search_web

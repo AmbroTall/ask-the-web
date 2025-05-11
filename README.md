@@ -12,7 +12,6 @@ ask_the_web/
 │   ├── __init__.py        # Marks ask_the_web as a package
 │   └── src/
 │       ├── __init__.py
-│       ├── app.py         # Streamlit UI and main app logic
 │       ├── search.py      # SerpAPI search integration
 │       ├── scrape.py      # Web content extraction
 │       ├── llm.py         # Gemini LLM answer generation
@@ -25,10 +24,10 @@ ask_the_web/
 │   ├── test_quality_check.py
 │   ├── test_llm.py
 │   └── test_telemetry.py
-├── .env.example           # Example environment variables
-├── .flake8               # Flake8 linting config
+├── .env.example          # Example environment variables
+├── app.py                # Streamlit UI and main app logic
 ├── mypy.ini              # Mypy type checking config
-├── requirements.txt       # Python dependencies
+├── requirements.txt      # Python dependencies
 ├── Dockerfile            # Docker setup
 └── README.md
 ```
@@ -142,8 +141,33 @@ Generate coverage report:
 pytest --cov=ask_the_web/src --cov-report=html
 ```
 
-View CI test results: https://example.com/test-results (screenshots of passing tests).
+# Ask the Web - Test Results
 
+```
+============================================================ test session starts ============================================================
+collected 18 items
+
+tests/test_llm.py::test_generate_answer_success PASSED                                                                              [  5%]
+tests/test_llm.py::test_generate_answer_no_content PASSED                                                                            [ 11%]
+tests/test_quality_check.py::test_extract_citations PASSED                                                                           [ 16%]
+tests/test_quality_check.py::test_extract_citations_empty PASSED                                                                     [ 22%]
+tests/test_quality_check.py::test_extract_citations_invalid PASSED                                                                   [ 27%]
+tests/test_quality_check.py::test_validate_citations_success PASSED                                                                  [ 33%]
+tests/test_quality_check.py::test_validate_citations_invalid PASSED                                                                  [ 38%]
+tests/test_scrape.py::test_scrape_page_success PASSED                                                                                [ 44%]
+tests/test_scrape.py::test_scrape_page_non_html PASSED                                                                               [ 50%]
+tests/test_scrape.py::test_scrape_page_404_error PASSED                                                                              [ 55%]
+tests/test_scrape.py::test_scrape_page_invalid_url PASSED                                                                            [ 61%]
+tests/test_scrape.py::test_scrape_page_retry_timeout PASSED                                                                          [ 66%]
+tests/test_search.py::test_search_web_success PASSED                                                                                 [ 72%]
+tests/test_search.py::test_search_web_empty PASSED                                                                                   [ 77%]
+tests/test_search.py::test_search_web_error PASSED                                                                                   [ 83%]
+tests/test_telemetry.py::test_count_tokens PASSED                                                                                    [ 88%]
+tests/test_telemetry.py::test_count_tokens_empty PASSED                                                                              [ 94%]
+tests/test_telemetry.py::test_track_telemetry PASSED                                                                                 [100%]
+
+============================================================= 18 passed in 4.02s =============================================================
+```
 ### Coverage:
 - **scrape.py**: Tests content extraction and error handling (invalid URLs, HTTP errors).  
 - **quality_check.py**: Tests citation extraction and validation logic.  
@@ -197,4 +221,4 @@ See `requirements.txt` for full list.
 
 - Built for SkillCat work sample.  
 - Uses SerpAPI free tier [SerpAPI license](https://serpapi.com/terms).  
-- BeautifulSoup and other libraries per their licenses.
+  - BeautifulSoup and other libraries per their licenses.                                                                                                      

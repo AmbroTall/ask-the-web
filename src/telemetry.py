@@ -1,4 +1,7 @@
-import os
+"""
+Module to track telemetry data such as token counts and latency.
+"""
+
 import tiktoken
 from typing import Dict, List, Any, Optional
 
@@ -9,24 +12,25 @@ load_dotenv()
 
 # Initialize encoder for token counting
 def get_tokenizer():
-    """Get the appropriate tokenizer based on environment variable or default to cl100k_base"""
-    model_name = os.getenv("LLM_MODEL", "gpt-3.5-turbo")
-    try:
-        return tiktoken.encoding_for_model(model_name)
-    except KeyError:
-        # Default to cl100k_base if model specific encoding is not found
-        return tiktoken.get_encoding("cl100k_base")
+    """
+    Get the cl100k_base tokenizer for token counting.
+
+    Note: Using cl100k_base as a general-purpose tokenizer since tiktoken does
+    not support Gemini models directly. This provides a reasonable
+    approximation for token counts.
+    """
+    return tiktoken.get_encoding("cl100k_base")
 
 
 def count_tokens(text: str) -> int:
     """
-    Count tokens accurately using tiktoken library
+    Count tokens accurately using tiktoken library.
 
     Args:
-        text: The text to count tokens for
+        text: The text to count tokens for.
 
     Returns:
-        int: Number of tokens in the text
+        int: Number of tokens in the text.
     """
     if not text:
         return 0
@@ -50,13 +54,13 @@ def track_telemetry(
     Track tokens and latency for a query with accurate token counting.
 
     Args:
-        question: The user's question
-        sources: List of dictionaries containing title and url for each source
-        scraped_texts: Dictionary mapping source URLs to their scraped text
-        answer: The generated answer text (optional)
+        question: The user's question.
+        sources: List of dictionaries containing title and url for each source.
+        scraped_texts: Dictionary mapping source URLs to their scraped text.
+        answer: The generated answer text (optional).
 
     Returns:
-        dict: Dictionary with token counts and other telemetry data
+        dict: Dictionary with token counts and other telemetry data.
     """
     # Calculate input tokens
     input_text = question

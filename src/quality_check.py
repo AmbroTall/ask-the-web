@@ -44,7 +44,9 @@ def extract_citations(answer_text: str) -> List[Tuple[str, List[int]]]:
 
 @st.cache_data
 def validate_citations(
-    answer: str, sources_data: List[Dict[str, str]], scraped_texts: Dict[str, str]
+    answer: str,
+    sources_data: List[Dict[str, str]],
+    scraped_texts: Dict[str, str]
 ) -> Dict[str, Any]:
     """
     Validate that citations in the answer are supported by the source texts.
@@ -67,7 +69,9 @@ def validate_citations(
         model = genai.GenerativeModel("gemini-1.5-flash")
     except Exception as e:
         print(f"Model initialization error for validator: {e}")
-        return {"overall_score": "N/A", "validation_error": str(e), "citations": []}
+        return {
+            "overall_score": "N/A", "validation_error": str(e), "citations": []
+        }
 
     citations_data = extract_citations(answer)
     results: Dict[str, Any] = {"overall_score": "Pending", "citations": []}
@@ -163,7 +167,9 @@ def validate_citations(
                 }
             )
 
-        valid_sentences = sum(c["validation"] == "Valid" for c in results["citations"])
+        valid_sentences = sum(
+            c["validation"] == "Valid" for c in results["citations"]
+        )
         total_sentences = len(results["citations"])
 
         if total_sentences > 0:
@@ -189,4 +195,6 @@ def validate_citations(
 
     except Exception as e:
         print(f"Validation error: {e}")
-        return {"overall_score": "N/A", "validation_error": str(e), "citations": []}
+        return {
+            "overall_score": "N/A", "validation_error": str(e), "citations": []
+        }
